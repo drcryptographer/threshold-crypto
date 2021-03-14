@@ -1,4 +1,4 @@
-package crypto
+package feldmanvss
 
 import (
 	"errors"
@@ -33,7 +33,7 @@ func AddShares(shares vss.Shares, next vss.Shares) (vss.Shares, error) {
 }
 
 func AddShare(share *vss.Share, next *vss.Share) (*vss.Share, error) {
-	if share.ID != next.ID {
+	if share.ID.Cmp(next.ID) != 0 {
 		return nil, errors.New("they do not have common id")
 	}
 	if share.Threshold != next.Threshold {

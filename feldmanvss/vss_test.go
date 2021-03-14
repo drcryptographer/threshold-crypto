@@ -1,4 +1,4 @@
-package crypto
+package feldmanvss
 
 import (
 	"github.com/binance-chain/tss-lib/common"
