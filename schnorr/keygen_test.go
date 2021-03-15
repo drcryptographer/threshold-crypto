@@ -28,10 +28,10 @@ func TestKeyGen(t *testing.T) {
 	agentKeys[5], _ = utils.LoadPrivateKeyPemFilePath("", "../shares/agent5.key")
 
 	ids := [5]int32{1, 2, 3, 4, 5}
-	players := make([]KeyGen, len(ids))
+	players := make([]SchnorrKeyGen, len(ids))
 	threshold := 3
 	for i := 0; i < len(players); i++ {
-		players[i] = NewKeyGen(agentKeys[int32(i+1)], agentCerts, ids[i], threshold)
+		players[i] = NewSchnorrKeyGen(agentKeys[int32(i+1)], agentCerts, ids[i], threshold)
 	}
 	var err error
 	roun1x := make([]*thresholdagent.SchnorrRound1Msg, len(ids))

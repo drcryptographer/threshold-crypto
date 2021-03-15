@@ -28,9 +28,11 @@ func TestSigning(t *testing.T) {
 	ids := []int32{1, 2, 3, 4} //16
 	message := []byte{5, 4, 7, 6}
 
-	signers := make([]*SigningCeremony, len(ids))
+	signers := make([]*SchnorrSigningCeremony, len(ids))
 	for i := 0; i < len(ids); i++ {
-		signers[i] = NewSigningCeremony(agentKeys[ids[i]], agentCerts, ids[i])
+		sc := &CloverSchnorrShare{}
+		sc.ReadFromFile(ids[i])
+		signers[i] = NewSchnorrSigningCeremony(agentKeys[ids[i]], agentCerts, sc)
 	}
 
 	var err error

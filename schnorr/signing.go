@@ -30,42 +30,39 @@ func Verify(sType thresholdagent.SignatureType, sgn *thresholdagent.SchnorrSigna
 	return RPrime.Equals(R)
 }
 
-type SigningCeremony struct {
-	*CloverShare
-	dkg     *KeyGen
+type SchnorrSigningCeremony struct {
+	*CloverSchnorrShare
+	dkg     *SchnorrKeyGen
 	sigma_i *big.Int
 	round0  *thresholdagent.SchnorrRound0Msg
 }
 
-func NewSigningCeremony(agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, id int32) *SigningCeremony {
-	sc := &CloverShare{}
-	sc.ReadFromFile(id)
-	dkg := NewKeyGen(agentKey, agentCerts, id, sc.Threshold)
-	return &SigningCeremony{
-		CloverShare: sc,
-		dkg:         &dkg,
+func NewSchnorrSigningCeremony(agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, share *CloverSchnorrShare) *SchnorrSigningCeremony {
+	dkg := NewSchnorrKeyGen(agentKey, agentCerts, share.Id(), share.Threshold)
+	return &SchnorrSigningCeremony{
+		CloverSchnorrShare: share,
+		dkg:                &dkg,
 	}
 }
 
-func (sc *SigningCeremony) PublicKey() *crypto.ECPoint {
-	return sc.CloverShare.Vs[0]
+func (sc *SchnorrSigningCeremony) PublicKey() *crypto.ECPoint {
+	return sc.CloverSchnorrShare.Vs[0]
 }
 
-func (sc *SigningCeremony) R() *crypto.ECPoint {
+func (sc *SchnorrSigningCeremony) R() *crypto.ECPoint {
 	return sc.dkg.GetPublicKey()
 }
 
-func (sc *SigningCeremony) Round1(round0 *thresholdagent.SchnorrRound0Msg) (*thresholdagent.SchnorrRound1Msg, error) {
-
+func (sc *SchnorrSigningCeremony) Round1(round0 *thresholdagent.SchnorrRound0Msg) (*thresholdagent.SchnorrRound1Msg, error) {
 	sc.round0 = round0
 	return sc.dkg.Round1(round0)
 }
 
-func (sc *SigningCeremony) Round2(round1 ...*thresholdagent.SchnorrRound1Msg) ([]*thresholdagent.SchnorrRound2Msg, error) {
+func (sc *SchnorrSigningCeremony) Round2(round1 ...*thresholdagent.SchnorrRound1Msg) ([]*thresholdagent.SchnorrRound2Msg, error) {
 	return sc.dkg.Round2(round1...)
 }
 
-func (sc *SigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2Msg) (*thresholdagent.SchnorrRound3Msg, error) {
+func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2Msg) (*thresholdagent.SchnorrRound3Msg, error) {
 	_, err := sc.dkg.Round3(round2...)
 	if err != nil {
 		return nil, err
@@ -123,7 +120,7 @@ func getScalar2(message []byte, R, PublicKey *crypto.ECPoint) *big.Int {
 	return result
 }
 
-func (sc *SigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3Msg) (*thresholdagent.SchnorrSignature, error) {
+func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3Msg) (*thresholdagent.SchnorrSignature, error) {
 	//reconstruct sigma
 	sharesFinal := make(vss.Shares, len(round3)+1)
 	for i, next := range round3 {

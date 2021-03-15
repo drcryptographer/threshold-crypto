@@ -17,17 +17,21 @@ import (
 	"math/big"
 )
 
-type CloverShare struct {
+type CloverSchnorrShare struct {
 	vss.Vs
 	vss.Share
 }
 
-func (cs *CloverShare) ReadFromFile(id int32) error {
-	buffer, _ := ioutil.ReadFile(fmt.Sprintf("../shares/share_%d.json", id))
+func (cs *CloverSchnorrShare) ReadFromFile(id int32) error {
+	buffer, _ := ioutil.ReadFile(fmt.Sprintf("../shares/schnorr_share_%d.json", id))
 	return json.Unmarshal(buffer, cs)
 }
 
-type KeyGen struct {
+func (cs *CloverSchnorrShare) Id() int32 {
+	return int32(cs.ID.Int64())
+}
+
+type SchnorrKeyGen struct {
 	SessionId string
 	*vss.Share
 	poly           vss.Vs
@@ -43,8 +47,8 @@ type KeyGen struct {
 	round0     *thresholdagent.SchnorrRound0Msg
 }
 
-func NewKeyGen(agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, id int32, threshold int) KeyGen {
-	return KeyGen{
+func NewSchnorrKeyGen(agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, id int32, threshold int) SchnorrKeyGen {
+	return SchnorrKeyGen{
 		Share: &vss.Share{
 			Threshold: threshold,
 			ID:        big.NewInt(int64(id)),
@@ -58,32 +62,32 @@ func NewKeyGen(agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificat
 		agentCerts:     agentCerts,
 	}
 }
-func (kg *KeyGen) GetCertificate() *x509.Certificate {
+func (kg *SchnorrKeyGen) GetCertificate() *x509.Certificate {
 	return kg.agentCerts[kg.Id()]
 }
-func (kg *KeyGen) GetSecretShare() *CloverShare {
-	return &CloverShare{
+func (kg *SchnorrKeyGen) GetSecretShare() *CloverSchnorrShare {
+	return &CloverSchnorrShare{
 		Vs:    kg.poly,
 		Share: *kg.Share,
 	}
 }
-func (kg *KeyGen) GetPublicKey() *crypto.ECPoint {
+func (kg *SchnorrKeyGen) GetPublicKey() *crypto.ECPoint {
 	return kg.poly[0]
 }
 
-func (kg *KeyGen) WriteToFile() {
+func (kg *SchnorrKeyGen) WriteToFile() {
 	result := kg.GetSecretShare()
 	buffer, _ := json.Marshal(&result)
-	ioutil.WriteFile(fmt.Sprintf("../shares/share_%d.json", kg.Id()), buffer, 0644)
+	ioutil.WriteFile(fmt.Sprintf("../shares/schnorr_share_%d.json", kg.Id()), buffer, 0644)
 }
 
-func (kg *KeyGen) Id() int32 {
+func (kg *SchnorrKeyGen) Id() int32 {
 	return int32(kg.ID.Int64())
 }
 
 //initialize polynomial and simulated polynomial
 //commit on the summation of two polynomial
-func (kg *KeyGen) Round1(round0 *thresholdagent.SchnorrRound0Msg) (*thresholdagent.SchnorrRound1Msg, error) {
+func (kg *SchnorrKeyGen) Round1(round0 *thresholdagent.SchnorrRound0Msg) (*thresholdagent.SchnorrRound1Msg, error) {
 	kg.round0 = round0
 	ids2 := make([]*big.Int, len(round0.Ids))
 	for i := 0; i < len(ids2); i++ {
@@ -122,7 +126,7 @@ func (kg *KeyGen) Round1(round0 *thresholdagent.SchnorrRound0Msg) (*thresholdage
 	return kg.round1Messages[kg.Id()], nil
 }
 
-func (kg *KeyGen) Round2(round1s ...*thresholdagent.SchnorrRound1Msg) ([]*thresholdagent.SchnorrRound2Msg, error) {
+func (kg *SchnorrKeyGen) Round2(round1s ...*thresholdagent.SchnorrRound1Msg) ([]*thresholdagent.SchnorrRound2Msg, error) {
 	if len(round1s)+1 < kg.Share.Threshold {
 		return nil, fmt.Errorf("not enough round 1 messages")
 	}
@@ -154,7 +158,7 @@ func (kg *KeyGen) Round2(round1s ...*thresholdagent.SchnorrRound1Msg) ([]*thresh
 	return roun2msgs, nil
 }
 
-func (kg *KeyGen) Round3(round2s ...*thresholdagent.SchnorrRound2Msg) (*thresholdagent.SchnorrRound3Msg, error) {
+func (kg *SchnorrKeyGen) Round3(round2s ...*thresholdagent.SchnorrRound2Msg) (*thresholdagent.SchnorrRound3Msg, error) {
 	if len(round2s)+1 < kg.Threshold {
 		return nil, fmt.Errorf("not enough round 1 messages")
 	}
