@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/x509"
 	"github.com/clover-network/threshold-crypto/schnorr"
 	"github.com/clover-network/threshold-crypto/thresholdagent"
 	"google.golang.org/grpc/codes"
@@ -9,13 +11,27 @@ import (
 )
 
 type ThresholdAgentService struct {
-	dkg      *schnorr.SchnorrKeyGen
-	ceremony *schnorr.SchnorrSigningCeremony
-	keyShare *schnorr.CloverSchnorrShare
+	dkg        map[string]*schnorr.SchnorrKeyGen
+	ceremony   map[string]*schnorr.SchnorrSigningCeremony
+	keyShare   *schnorr.CloverSchnorrShare
+	caCert     *x509.Certificate
+	agentCerts map[int32]*x509.Certificate
+	agentKey   *ecdsa.PrivateKey
 }
 
-func NewThresholdAgentService() *ThresholdAgentService {
-	return &ThresholdAgentService{}
+func (tas *ThresholdAgentService) Id() int32 {
+	return tas.keyShare.Id()
+}
+
+func NewThresholdAgentService(caCert *x509.Certificate, agentCerts map[int32]*x509.Certificate, agentKey *ecdsa.PrivateKey, keyShare *schnorr.CloverSchnorrShare) *ThresholdAgentService {
+	return &ThresholdAgentService{
+		dkg:        make(map[string]*schnorr.SchnorrKeyGen),
+		ceremony:   make(map[string]*schnorr.SchnorrSigningCeremony),
+		caCert:     caCert,
+		agentKey:   agentKey,
+		agentCerts: agentCerts,
+		keyShare:   keyShare,
+	}
 }
 
 func (tas *ThresholdAgentService) Authenticate(ctx context.Context, ar *thresholdagent.AuthRequest) (*thresholdagent.AuthResponse, error) {
