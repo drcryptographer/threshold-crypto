@@ -22,34 +22,34 @@ enum SignatureType {
 
 
 message SchnorrRound0Msg {
-  string SessionId  = 1;
+  string SessionId = 1;
   SignatureType  sType = 2;
-  repeated int32 ids=3;
+  repeated int32 ids = 3;
   bytes message = 4;
 }
 
 message SchnorrRound1Msg {
-  string SessionId  = 1;
+  string SessionId = 1;
   int32  SenderId = 2;
-  bytes  Commitment =3;
+  bytes  Commitment = 3;
 }
 
 message SchnorrRound2Msg {
-  string SessionId  = 1;
+  string SessionId = 1;
   int32  SenderId = 2;
   int32  ReceiverId = 3;
-  bytes  ShareKey =4;
-  bytes  SimulatedShareKey =5;
-  bytes  Poly =6;
+  bytes  ShareKey = 4;
+  bytes  SimulatedShareKey = 5;
+  bytes  Poly = 6;
 }
 
 
 message SchnorrRound3Msg {
-  string SessionId  = 1;
+  string SessionId = 1;
   int32  SenderId = 2;
   oneof Data {
-    bytes  PublicKey =3;
-    bytes  SigmaI =4;
+    bytes  PublicKey = 3;
+    bytes  SigmaI = 4;
   }
 }
 
@@ -67,7 +67,7 @@ message AuthResponse{
 }
 
 message SchnorrSignature {
-  string SessionId  = 1;
+  string SessionId = 1;
   int32  SenderId = 2;
   bytes R = 3;
   bytes S = 4;
