@@ -73,17 +73,26 @@ message SchnorrSignature {
   bytes S = 4;
 }
 
+message SchnorrRound1MsgList {
+  repeated SchnorrRound1Msg messages=1;
+}
+message SchnorrRound2MsgList {
+  repeated SchnorrRound2Msg messages=1;
+}
+message SchnorrRound3MsgList {
+  repeated SchnorrRound3Msg messages=1;
+}
 
 service ThresholdAgent {
   rpc Authenticate(AuthRequest) returns (AuthResponse) {}
 
   rpc DkgSchnorrRound1(SchnorrRound0Msg) returns (SchnorrRound1Msg) {}
-  rpc DkgSchnorrRound2(stream SchnorrRound1Msg) returns (stream SchnorrRound2Msg) {}
-  rpc DkgSchnorrRound3(stream SchnorrRound2Msg) returns (SchnorrRound3Msg) {}
+  rpc DkgSchnorrRound2(SchnorrRound1MsgList) returns (SchnorrRound2MsgList) {}
+  rpc DkgSchnorrRound3(SchnorrRound2MsgList) returns (SchnorrRound3Msg) {}
 
   rpc SchnorrSignRound1(SchnorrRound0Msg) returns (SchnorrRound1Msg) {}
-  rpc SchnorrSignRound2(stream SchnorrRound1Msg) returns (stream SchnorrRound2Msg) {}
-  rpc SchnorrSignRound3(stream SchnorrRound2Msg) returns (SchnorrRound3Msg) {}
-  rpc SchnorrSignRound4(stream SchnorrRound3Msg) returns (SchnorrSignature) {}
+  rpc SchnorrSignRound2(SchnorrRound1MsgList) returns (SchnorrRound2MsgList) {}
+  rpc SchnorrSignRound3(SchnorrRound2MsgList) returns (SchnorrRound3Msg) {}
+  rpc SchnorrSignRound4(SchnorrRound3MsgList) returns (SchnorrSignature) {}
 
 }
