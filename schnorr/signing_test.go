@@ -30,13 +30,18 @@ func TestSigning(t *testing.T) {
 
 	signers := make([]*SigningCeremony, len(ids))
 	for i := 0; i < len(ids); i++ {
-		signers[i] = NewSigningCeremony(agentKeys[ids[i]], agentCerts, "session 1", ids[i], message)
+		signers[i] = NewSigningCeremony(agentKeys[ids[i]], agentCerts, ids[i])
 	}
 
 	var err error
 	roun1x := make([]*thresholdagent.SchnorrRound1Msg, len(ids))
 	for i := 0; i < len(signers); i++ {
-		roun1x[i], err = signers[i].Round1()
+		roun1x[i], err = signers[i].Round1(&thresholdagent.SchnorrRound0Msg{
+			SessionId: "session 1",
+			SType:     thresholdagent.SignatureType_SCHNORRv1,
+			Ids:       ids,
+			Message:   message,
+		})
 		assert.Nil(t, err)
 	}
 
@@ -55,7 +60,7 @@ func TestSigning(t *testing.T) {
 	for i := 0; i < len(signers); i++ {
 		roun4x[i], err = signers[i].Round4(filter3i(int32(signers[i].ID.Int64()), roun3x)...)
 		assert.Nil(t, err)
-		assert.True(t, Verify(roun4x[i], message, signers[i].PublicKey()))
+		assert.True(t, Verify(signers[i].round0.SType, roun4x[i], message, signers[i].PublicKey()))
 	}
 }
 func filter3i(id int32, roundx []*thresholdagent.SchnorrRound3Msg) []*thresholdagent.SchnorrRound3Msg {

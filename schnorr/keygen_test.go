@@ -31,12 +31,16 @@ func TestKeyGen(t *testing.T) {
 	players := make([]KeyGen, len(ids))
 	threshold := 3
 	for i := 0; i < len(players); i++ {
-		players[i] = NewKeyGen(agentKeys[int32(i+1)], agentCerts, "session 1", ids[i], threshold)
+		players[i] = NewKeyGen(agentKeys[int32(i+1)], agentCerts, ids[i], threshold)
 	}
 	var err error
 	roun1x := make([]*thresholdagent.SchnorrRound1Msg, len(ids))
 	for i := 0; i < len(players); i++ {
-		roun1x[i], err = players[i].Round1(ids[:])
+		roun1x[i], err = players[i].Round1(&thresholdagent.SchnorrRound0Msg{
+			SessionId: "session 1",
+			SType:     thresholdagent.SignatureType_SCHNORRv1,
+			Ids:       ids[:],
+		})
 		assert.Nil(t, err)
 	}
 
