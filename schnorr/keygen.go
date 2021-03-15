@@ -11,38 +11,18 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/clover-network/threshold-crypto/encrypting"
 	"github.com/clover-network/threshold-crypto/feldmanvss"
+	"github.com/clover-network/threshold-crypto/thresholdagent"
 	"github.com/clover-network/threshold-crypto/utils"
 	"io/ioutil"
 	"math/big"
 )
-
-type Round1Message struct {
-	SessionId  string
-	SenderId   int
-	Commitment []byte
-}
-
-type Round2Message struct {
-	SessionId         string
-	SenderId          int
-	ReceiverId        int
-	ShareKey          []byte
-	SimulatedShareKey []byte
-	Poly              []byte
-}
-
-type Round3Message struct {
-	SessionId string
-	SenderId  int
-	PublicKey []byte
-}
 
 type CloverShare struct {
 	vss.Vs
 	vss.Share
 }
 
-func (cs *CloverShare) ReadFromFile(id int) error {
+func (cs *CloverShare) ReadFromFile(id int32) error {
 	buffer, _ := ioutil.ReadFile(fmt.Sprintf("../shares/share_%d.json", id))
 	return json.Unmarshal(buffer, cs)
 }
@@ -52,17 +32,17 @@ type KeyGen struct {
 	*vss.Share
 	poly           vss.Vs
 	simPoly        vss.Vs
-	shares         map[int]*vss.Share
-	simShares      map[int]*vss.Share
-	round1Messages map[int]*Round1Message
-	round2Messages map[int]*Round2Message
+	shares         map[int32]*vss.Share
+	simShares      map[int32]*vss.Share
+	round1Messages map[int32]*thresholdagent.SchnorrRound1Msg
+	round2Messages map[int32]*thresholdagent.SchnorrRound2Msg
 
 	agentKey   *ecdsa.PrivateKey
-	agentCerts map[int]*x509.Certificate
+	agentCerts map[int32]*x509.Certificate
 	caCert     *x509.Certificate
 }
 
-func NewKeyGen(agentKey *ecdsa.PrivateKey, agentCerts map[int]*x509.Certificate, SessionId string, id, threshold int) KeyGen {
+func NewKeyGen(agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, SessionId string, id int32, threshold int) KeyGen {
 	return KeyGen{
 		SessionId: SessionId,
 		Share: &vss.Share{
@@ -70,10 +50,10 @@ func NewKeyGen(agentKey *ecdsa.PrivateKey, agentCerts map[int]*x509.Certificate,
 			ID:        big.NewInt(int64(id)),
 			Share:     big.NewInt(0),
 		},
-		shares:         make(map[int]*vss.Share),
-		simShares:      make(map[int]*vss.Share),
-		round1Messages: make(map[int]*Round1Message),
-		round2Messages: make(map[int]*Round2Message),
+		shares:         make(map[int32]*vss.Share),
+		simShares:      make(map[int32]*vss.Share),
+		round1Messages: make(map[int32]*thresholdagent.SchnorrRound1Msg),
+		round2Messages: make(map[int32]*thresholdagent.SchnorrRound2Msg),
 		agentKey:       agentKey,
 		agentCerts:     agentCerts,
 	}
@@ -97,10 +77,10 @@ func (kg *KeyGen) WriteToFile() {
 	ioutil.WriteFile(fmt.Sprintf("../shares/share_%d.json", kg.Id()), buffer, 0644)
 }
 
-func (kg *KeyGen) Id() int {
-	return int(kg.ID.Int64())
+func (kg *KeyGen) Id() int32 {
+	return int32(kg.ID.Int64())
 }
-func (kg *KeyGen) Round3(round2s ...*Round2Message) (*Round3Message, error) {
+func (kg *KeyGen) Round3(round2s ...*thresholdagent.SchnorrRound2Msg) (*thresholdagent.SchnorrRound3Msg, error) {
 	if len(round2s)+1 < kg.Threshold {
 		return nil, fmt.Errorf("not enough round 1 messages")
 	}
@@ -150,21 +130,23 @@ func (kg *KeyGen) Round3(round2s ...*Round2Message) (*Round3Message, error) {
 	//calculate public key
 	//store share
 	pubkey, _ := poly[0].GobEncode()
-	return &Round3Message{
+	return &thresholdagent.SchnorrRound3Msg{
 		SessionId: kg.SessionId,
 		SenderId:  kg.Id(),
-		PublicKey: pubkey,
+		Data: &thresholdagent.SchnorrRound3Msg_PublicKey{
+			PublicKey: pubkey,
+		},
 	}, nil
 }
 
-func (kg *KeyGen) Round2(round1s ...*Round1Message) ([]*Round2Message, error) {
+func (kg *KeyGen) Round2(round1s ...*thresholdagent.SchnorrRound1Msg) ([]*thresholdagent.SchnorrRound2Msg, error) {
 	if len(round1s)+1 < kg.Share.Threshold {
 		return nil, fmt.Errorf("not enough round 1 messages")
 	}
 	for i := 0; i < len(round1s); i++ {
 		kg.round1Messages[round1s[i].SenderId] = round1s[i]
 	}
-	var roun2msgs []*Round2Message
+	var roun2msgs []*thresholdagent.SchnorrRound2Msg
 	poly, err := json.Marshal(&kg.poly)
 	if err != nil {
 		return nil, err
@@ -174,13 +156,13 @@ func (kg *KeyGen) Round2(round1s ...*Round1Message) ([]*Round2Message, error) {
 			kg.Share.Share = next.Share
 			continue
 		}
-		var encryptedKey, _ = encrypting.Encrypt(kg.agentKey, kg.agentCerts[kg.Id()], kg.agentCerts[int(next.ID.Int64())], utils.ToBytes(next))
-		var encryptedSimulatedShareKey, _ = encrypting.Encrypt(kg.agentKey, kg.agentCerts[kg.Id()], kg.agentCerts[int(next.ID.Int64())], utils.ToBytes(kg.simShares[i]))
+		var encryptedKey, _ = encrypting.Encrypt(kg.agentKey, kg.agentCerts[kg.Id()], kg.agentCerts[int32(next.ID.Int64())], utils.ToBytes(next))
+		var encryptedSimulatedShareKey, _ = encrypting.Encrypt(kg.agentKey, kg.agentCerts[kg.Id()], kg.agentCerts[int32(next.ID.Int64())], utils.ToBytes(kg.simShares[i]))
 
-		roun2msgs = append(roun2msgs, &Round2Message{
+		roun2msgs = append(roun2msgs, &thresholdagent.SchnorrRound2Msg{
 			SessionId:         kg.SessionId,
 			SenderId:          kg.Id(),
-			ReceiverId:        int(next.ID.Int64()),
+			ReceiverId:        int32(next.ID.Int64()),
 			ShareKey:          encryptedKey,               //encrypt it
 			SimulatedShareKey: encryptedSimulatedShareKey, //encrypt it
 			Poly:              poly,
@@ -191,7 +173,7 @@ func (kg *KeyGen) Round2(round1s ...*Round1Message) ([]*Round2Message, error) {
 
 //initialize polynomial and simulated polynomial
 //commit on the summation of two polynomial
-func (kg *KeyGen) Round1(ids []int) (*Round1Message, error) {
+func (kg *KeyGen) Round1(ids []int32) (*thresholdagent.SchnorrRound1Msg, error) {
 	ids2 := make([]*big.Int, len(ids))
 	for i := 0; i < len(ids); i++ {
 		ids2[i] = big.NewInt(int64(ids[i]))
@@ -204,13 +186,13 @@ func (kg *KeyGen) Round1(ids []int) (*Round1Message, error) {
 	poly, shares, _ := vss.Create(kg.Threshold, secret, ids2)
 	kg.poly = poly
 	for _, next := range shares {
-		kg.shares[int(next.ID.Int64())] = next
+		kg.shares[int32(next.ID.Int64())] = next
 	}
 	//commitment should be on H not on G
 	simPoly, simShares, _ := vss.Create(kg.Threshold, simSecret, ids2)
 	kg.simPoly = simPoly
 	for _, next := range simShares {
-		kg.simShares[int(next.ID.Int64())] = next
+		kg.simShares[int32(next.ID.Int64())] = next
 	}
 
 	commitment, err := feldmanvss.AddVs(kg.simPoly, kg.poly)
@@ -221,9 +203,9 @@ func (kg *KeyGen) Round1(ids []int) (*Round1Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	kg.round1Messages[kg.Id()] = &Round1Message{
+	kg.round1Messages[kg.Id()] = &thresholdagent.SchnorrRound1Msg{
 		SessionId:  kg.SessionId,
-		SenderId:   int(kg.ID.Int64()),
+		SenderId:   int32(kg.ID.Int64()),
 		Commitment: buffer,
 	}
 	return kg.round1Messages[kg.Id()], nil

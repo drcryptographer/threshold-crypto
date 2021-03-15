@@ -5,14 +5,15 @@ import (
 	"crypto/x509"
 	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/tss"
+	"github.com/clover-network/threshold-crypto/thresholdagent"
 	"github.com/clover-network/threshold-crypto/utils"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestKeyGen(t *testing.T) {
-	var agentKeys = make(map[int]*ecdsa.PrivateKey)
-	var agentCerts = make(map[int]*x509.Certificate)
+	var agentKeys = make(map[int32]*ecdsa.PrivateKey)
+	var agentCerts = make(map[int32]*x509.Certificate)
 
 	agentCerts[1], _ = utils.LoadCertificateFromFilePath("../shares/agent1.cert")
 	agentCerts[2], _ = utils.LoadCertificateFromFilePath("../shares/agent2.cert")
@@ -26,28 +27,28 @@ func TestKeyGen(t *testing.T) {
 	agentKeys[4], _ = utils.LoadPrivateKeyPemFilePath("", "../shares/agent4.key")
 	agentKeys[5], _ = utils.LoadPrivateKeyPemFilePath("", "../shares/agent5.key")
 
-	ids := [5]int{1, 2, 3, 4, 5}
+	ids := [5]int32{1, 2, 3, 4, 5}
 	players := make([]KeyGen, len(ids))
 	threshold := 3
 	for i := 0; i < len(players); i++ {
-		players[i] = NewKeyGen(agentKeys[i+1], agentCerts, "session 1", ids[i], threshold)
+		players[i] = NewKeyGen(agentKeys[int32(i+1)], agentCerts, "session 1", ids[i], threshold)
 	}
 	var err error
-	roun1x := make([]*Round1Message, len(ids))
+	roun1x := make([]*thresholdagent.SchnorrRound1Msg, len(ids))
 	for i := 0; i < len(players); i++ {
 		roun1x[i], err = players[i].Round1(ids[:])
 		assert.Nil(t, err)
 	}
 
-	roun2x := make([][]*Round2Message, len(ids))
+	roun2x := make([][]*thresholdagent.SchnorrRound2Msg, len(ids))
 	for i := 0; i < len(players); i++ {
-		roun2x[i], err = players[i].Round2(filter(int(players[i].ID.Int64()), roun1x)...)
+		roun2x[i], err = players[i].Round2(filter(int32(players[i].ID.Int64()), roun1x)...)
 		assert.Nil(t, err)
 	}
 
-	roun3x := make([]*Round3Message, len(ids))
+	roun3x := make([]*thresholdagent.SchnorrRound3Msg, len(ids))
 	for i := 0; i < len(players); i++ {
-		roun3x[i], err = players[i].Round3(filter2(int(players[i].ID.Int64()), roun2x)...)
+		roun3x[i], err = players[i].Round3(filter2(int32(players[i].ID.Int64()), roun2x)...)
 		assert.Nil(t, err)
 		players[i].WriteToFile()
 	}
@@ -58,8 +59,8 @@ func TestKeyGen(t *testing.T) {
 
 }
 
-func filter2(id int, roundx [][]*Round2Message) []*Round2Message {
-	var result []*Round2Message
+func filter2(id int32, roundx [][]*thresholdagent.SchnorrRound2Msg) []*thresholdagent.SchnorrRound2Msg {
+	var result []*thresholdagent.SchnorrRound2Msg
 	for _, line := range roundx {
 		for _, next := range line {
 			if next.ReceiverId == id && next.SenderId != id {
@@ -69,8 +70,8 @@ func filter2(id int, roundx [][]*Round2Message) []*Round2Message {
 	}
 	return result
 }
-func filter(id int, roundx []*Round1Message) []*Round1Message {
-	var result []*Round1Message
+func filter(id int32, roundx []*thresholdagent.SchnorrRound1Msg) []*thresholdagent.SchnorrRound1Msg {
+	var result []*thresholdagent.SchnorrRound1Msg
 	for _, next := range roundx {
 		if next.SenderId != id {
 			result = append(result, next)

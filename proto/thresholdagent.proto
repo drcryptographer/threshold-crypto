@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package thresholdagent;
+
+option go_package = "github.com/clover-network/threshold-crypto/thresholdagent";
+import "google/protobuf/timestamp.proto";
+
+
+enum Status {
+  UNKNOWN = 0;
+  SUCCEEDED = 1;
+  DENIED = 2;
+  FAILED = 3;
+}
+
+enum SignatureType {
+  SCHNORRv1 = 0; //bitcoin schnorr
+  SCHNORRv2 = 1; //ethereum schnorr
+  ECDSAv1 = 2; //bitcoin schnorr
+  ECDSAv2 = 3; //ethereum schnorr
+}
+
+
+message SchnorrRound0Msg {
+  string SessionId  = 1;
+  SignatureType  sType = 2;
+  repeated int32 ids=3;
+}
+
+message SchnorrRound1Msg {
+  string SessionId  = 1;
+  int32  SenderId = 2;
+  bytes  Commitment =3;
+}
+
+message SchnorrRound2Msg {
+  string SessionId  = 1;
+  int32  SenderId = 2;
+  int32  ReceiverId = 3;
+  bytes  ShareKey =4;
+  bytes  SimulatedShareKey =5;
+  bytes  Poly =6;
+}
+
+
+message SchnorrRound3Msg {
+  string SessionId  = 1;
+  int32  SenderId = 2;
+  oneof Data {
+    bytes  PublicKey =3;
+    bytes  SigmaI =4;
+  }
+}
+
+message AuthRequest{
+  string sessionId = 1;
+  bytes challenge = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+message AuthResponse{
+  string sessionId = 1;
+  bytes signatureR = 2;
+  bytes signatureS = 3;
+  bytes certificate = 4;
+}
+
+message SchnorrSignature {
+  string SessionId  = 1;
+  int32  SenderId = 2;
+  bytes R = 3;
+  bytes S = 4;
+}
+
+
+service ThresholdAgent {
+  rpc Authenticate(AuthRequest) returns (AuthResponse) {}
+
+  rpc DkgSchnorrRound1(SchnorrRound0Msg) returns (SchnorrRound1Msg) {}
+  rpc DkgSchnorrRound2(stream SchnorrRound1Msg) returns (stream SchnorrRound2Msg) {}
+  rpc DkgSchnorrRound3(stream SchnorrRound2Msg) returns (SchnorrRound3Msg) {}
+
+  rpc SchnorrSignRound1(SchnorrRound0Msg) returns (SchnorrRound1Msg) {}
+  rpc SchnorrSignRound2(stream SchnorrRound1Msg) returns (stream SchnorrRound2Msg) {}
+  rpc SchnorrSignRound3(stream SchnorrRound2Msg) returns (SchnorrRound3Msg) {}
+  rpc SchnorrSignRound4(stream SchnorrRound3Msg) returns (SchnorrSignature) {}
+
+}
