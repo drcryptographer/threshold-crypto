@@ -16,8 +16,8 @@ enum Status {
 enum SignatureType {
   SCHNORRv1 = 0; //bitcoin schnorr
   SCHNORRv2 = 1; //ethereum schnorr
-  ECDSAv1 = 2; //bitcoin schnorr
-  ECDSAv2 = 3; //ethereum schnorr
+  ECDSAv1 = 2; //bitcoin ecdsa
+  ECDSAv2 = 3; //ethereum ecdsa
 }
 
 

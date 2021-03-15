@@ -7,6 +7,13 @@ import (
 )
 
 type ThresholdAgentService struct {
+	//dkg *schnorr.KeyGen
+	//ceremony *schnorr.SigningCeremony
+	//keyShare *schnorr.CloverShare
+}
+
+func NewThresholdAgentService() *ThresholdAgentService {
+	return &ThresholdAgentService{}
 }
 
 func (tas *ThresholdAgentService) Authenticate(ctx context.Context, ar *AuthRequest) (*AuthResponse, error) {
