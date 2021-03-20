@@ -47,10 +47,10 @@ type SchnorrKeyGen struct {
 	round0     *thresholdagent.SchnorrRound0Msg
 }
 
-func NewSchnorrKeyGen(caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, id int32, threshold int) SchnorrKeyGen {
+func NewSchnorrKeyGen(caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, id int32) SchnorrKeyGen {
 	return SchnorrKeyGen{
 		Share: &vss.Share{
-			Threshold: threshold,
+			Threshold: 0,
 			ID:        big.NewInt(int64(id)),
 			Share:     big.NewInt(0),
 		},
@@ -91,6 +91,9 @@ func (kg *SchnorrKeyGen) Id() int32 {
 func (kg *SchnorrKeyGen) Round1(round0 *thresholdagent.SchnorrRound0Msg) (*thresholdagent.SchnorrRound1Msg, error) {
 	//we assume that each certificate has common name with "agent={Id}"
 	kg.round0 = round0
+	if round0.GetThreshold() > 0 {
+		kg.Threshold = int(round0.GetThreshold())
+	}
 	ids2 := make([]*big.Int, len(round0.SignerCerts))
 	for i := 0; i < len(ids2); i++ {
 		cert, _ := utils.ParseCertificate(round0.SignerCerts[i])

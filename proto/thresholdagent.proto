@@ -20,12 +20,14 @@ enum SignatureType {
   ECDSAv2 = 3; //ethereum ecdsa
 }
 
-
 message SchnorrRound0Msg {
   string SessionId = 1;
   SignatureType  sType = 2;
   repeated bytes signerCerts = 3;
-  bytes message = 4;
+  oneof request {
+    int32 threshold = 4;
+    bytes message = 5;
+  }
 }
 
 message SchnorrRound1Msg {

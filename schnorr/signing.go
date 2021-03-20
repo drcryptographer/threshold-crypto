@@ -38,7 +38,8 @@ type SchnorrSigningCeremony struct {
 }
 
 func NewSchnorrSigningCeremony(caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, share *CloverSchnorrShare) *SchnorrSigningCeremony {
-	dkg := NewSchnorrKeyGen(caCert, agentKey, agentCerts, share.Id(), share.Threshold)
+	dkg := NewSchnorrKeyGen(caCert, agentKey, agentCerts, share.Id())
+	dkg.Threshold = share.Threshold
 	return &SchnorrSigningCeremony{
 		CloverSchnorrShare: share,
 		dkg:                &dkg,
@@ -68,7 +69,7 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 		return nil, err
 	}
 	r_i := sc.dkg.Share.Share
-	k := getScalar(sc.round0.SType, sc.round0.Message, sc.R(), sc.PublicKey())
+	k := getScalar(sc.round0.SType, sc.round0.GetMessage(), sc.R(), sc.PublicKey())
 
 	sigma_i := new(big.Int).Mul(k, sc.Share.Share)
 	sigma_i = new(big.Int).Add(sigma_i, r_i)
@@ -147,7 +148,7 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 		R:        buffer,
 		S:        s.Bytes(),
 	}
-	if !Verify(sc.round0.SType, sgn, sc.round0.Message, sc.PublicKey()) {
+	if !Verify(sc.round0.SType, sgn, sc.round0.GetMessage(), sc.PublicKey()) {
 		return nil, fmt.Errorf("the computed signature is not valid")
 	}
 	//verify signature
