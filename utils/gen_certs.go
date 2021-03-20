@@ -87,10 +87,6 @@ func VerifyCertificate(childCertPem, rootCertPem []byte) bool {
 	return VerifyCert(childCert, rootCert)
 }
 
-func GetId(cert *x509.Certificate) int32 {
-	result, _ := strconv.Atoi(string([]byte(cert.Subject.CommonName)[6:]))
-	return int32(result)
-}
 func VerifyCert(childCert, rootCert *x509.Certificate) bool {
 	var roots = x509.NewCertPool()
 	roots.AddCert(rootCert)

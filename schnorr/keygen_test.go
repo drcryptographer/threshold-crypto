@@ -8,12 +8,15 @@ import (
 	"github.com/clover-network/threshold-crypto/thresholdagent"
 	"github.com/clover-network/threshold-crypto/utils"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"testing"
 )
 
 func TestKeyGen(t *testing.T) {
 	var agentKeys = make(map[int32]*ecdsa.PrivateKey)
 	var agentCerts = make(map[int32]*x509.Certificate)
+
+	var signerCerts = make([][]byte, 5)
 
 	agentCerts[1], _ = utils.LoadCertificateFromFilePath("../shares/agent1.cert")
 	agentCerts[2], _ = utils.LoadCertificateFromFilePath("../shares/agent2.cert")
@@ -27,19 +30,28 @@ func TestKeyGen(t *testing.T) {
 	agentKeys[4], _ = utils.LoadPrivateKeyPemFilePath("", "../shares/agent4.key")
 	agentKeys[5], _ = utils.LoadPrivateKeyPemFilePath("", "../shares/agent5.key")
 
+	//
+	signerCerts[0], _ = ioutil.ReadFile("../shares/agent1.cert")
+	signerCerts[1], _ = ioutil.ReadFile("../shares/agent2.cert")
+	signerCerts[2], _ = ioutil.ReadFile("../shares/agent3.cert")
+	signerCerts[3], _ = ioutil.ReadFile("../shares/agent4.cert")
+	signerCerts[4], _ = ioutil.ReadFile("../shares/agent5.cert")
+
+	var caCert, _ = utils.LoadCertificateFromFilePath("../shares/ca.cert")
+
 	ids := [5]int32{1, 2, 3, 4, 5}
 	players := make([]SchnorrKeyGen, len(ids))
 	threshold := 3
 	for i := 0; i < len(players); i++ {
-		players[i] = NewSchnorrKeyGen(agentKeys[int32(i+1)], agentCerts, ids[i], threshold)
+		players[i] = NewSchnorrKeyGen(caCert, agentKeys[int32(i+1)], agentCerts, ids[i], threshold)
 	}
 	var err error
 	roun1x := make([]*thresholdagent.SchnorrRound1Msg, len(ids))
 	for i := 0; i < len(players); i++ {
 		roun1x[i], err = players[i].Round1(&thresholdagent.SchnorrRound0Msg{
-			SessionId: "session 1",
-			SType:     thresholdagent.SignatureType_SCHNORRv1,
-			Ids:       ids[:],
+			SessionId:   "session 1",
+			SType:       thresholdagent.SignatureType_SCHNORRv1,
+			SignerCerts: signerCerts,
 		})
 		assert.Nil(t, err)
 	}

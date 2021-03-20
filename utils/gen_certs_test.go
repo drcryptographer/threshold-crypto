@@ -46,7 +46,7 @@ func TestGetId(t *testing.T) {
 	for i := 1; i <= 5; i++ {
 		var agentCertByte, _ = ioutil.ReadFile(fmt.Sprintf("../shares/agent%d.cert", i))
 		agentCert, _ := ParseCertificate(agentCertByte)
-		assert.Equal(t, i, GetId(agentCert))
+		assert.Equal(t, int32(i), GetId(agentCert))
 	}
 }
 

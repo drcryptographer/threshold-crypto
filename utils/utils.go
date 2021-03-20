@@ -4,11 +4,13 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
 	"github.com/binance-chain/tss-lib/crypto/vss"
 	"io"
 	"math/big"
+	"strconv"
 	"strings"
 )
 
@@ -21,6 +23,20 @@ func ScalarECCBaseMult(curve elliptic.Curve, k *big.Int) *Point {
 		X: x,
 		Y: y,
 	}
+}
+func GetId(certificate *x509.Certificate) int32 {
+	return GetIdofCert(certificate.Subject.CommonName)
+}
+func GetIdofCert(name string) int32 {
+	var id = strings.TrimPrefix(name, "agent=")
+	if id == name {
+		return -1
+	}
+	var result, err = strconv.Atoi(id)
+	if err != nil {
+		return -1
+	}
+	return int32(result)
 }
 
 func ScalarECCMult(curve elliptic.Curve, point *Point, k *big.Int) *Point {

@@ -24,7 +24,7 @@ enum SignatureType {
 message SchnorrRound0Msg {
   string SessionId = 1;
   SignatureType  sType = 2;
-  repeated int32 ids = 3;
+  repeated bytes signerCerts = 3;
   bytes message = 4;
 }
 
