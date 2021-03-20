@@ -47,7 +47,7 @@ type SchnorrKeyGen struct {
 	round0     *thresholdagent.SchnorrRound0Msg
 }
 
-func NewSchnorrKeyGen(agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, id int32, threshold int) SchnorrKeyGen {
+func NewSchnorrKeyGen(caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, id int32, threshold int) SchnorrKeyGen {
 	return SchnorrKeyGen{
 		Share: &vss.Share{
 			Threshold: threshold,
@@ -60,6 +60,7 @@ func NewSchnorrKeyGen(agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Cer
 		round2Messages: make(map[int32]*thresholdagent.SchnorrRound2Msg),
 		agentKey:       agentKey,
 		agentCerts:     agentCerts,
+		caCert:         caCert,
 	}
 }
 func (kg *SchnorrKeyGen) GetCertificate() *x509.Certificate {
@@ -88,10 +89,19 @@ func (kg *SchnorrKeyGen) Id() int32 {
 //initialize polynomial and simulated polynomial
 //commit on the summation of two polynomial
 func (kg *SchnorrKeyGen) Round1(round0 *thresholdagent.SchnorrRound0Msg) (*thresholdagent.SchnorrRound1Msg, error) {
+	//we assume that each certificate has common name with "agent={Id}"
 	kg.round0 = round0
-	ids2 := make([]*big.Int, len(round0.Ids))
+	ids2 := make([]*big.Int, len(round0.SignerCerts))
 	for i := 0; i < len(ids2); i++ {
-		ids2[i] = big.NewInt(int64(round0.Ids[i]))
+		cert, _ := utils.ParseCertificate(round0.SignerCerts[i])
+		if !utils.VerifyCert(cert, kg.caCert) {
+			return nil, fmt.Errorf("not verified certificate [%s]", cert.Subject.CommonName)
+		}
+		var id = utils.GetId(cert)
+		if id < 1 {
+			return nil, fmt.Errorf("not valid agent id of certificate [%s]", cert.Subject.CommonName)
+		}
+		ids2[i] = big.NewInt(int64(id))
 	}
 	var order = tss.EC().Params().N
 

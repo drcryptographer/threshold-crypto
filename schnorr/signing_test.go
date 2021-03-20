@@ -6,6 +6,7 @@ import (
 	"github.com/clover-network/threshold-crypto/thresholdagent"
 	"github.com/clover-network/threshold-crypto/utils"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"testing"
 )
 
@@ -25,6 +26,15 @@ func TestSigning(t *testing.T) {
 	agentKeys[4], _ = utils.LoadPrivateKeyPemFilePath("", "../shares/agent4.key")
 	//agentKeys[5], _ = utils.LoadPrivateKeyPemFilePath("","../shares/agent5.key")
 
+	var signerCerts = make([][]byte, 4)
+
+	signerCerts[0], _ = ioutil.ReadFile("../shares/agent1.cert")
+	signerCerts[1], _ = ioutil.ReadFile("../shares/agent2.cert")
+	signerCerts[2], _ = ioutil.ReadFile("../shares/agent3.cert")
+	signerCerts[3], _ = ioutil.ReadFile("../shares/agent4.cert")
+
+	var caCert, _ = utils.LoadCertificateFromFilePath("../shares/ca.cert")
+
 	ids := []int32{1, 2, 3, 4} //16
 	message := []byte{5, 4, 7, 6}
 
@@ -32,17 +42,17 @@ func TestSigning(t *testing.T) {
 	for i := 0; i < len(ids); i++ {
 		sc := &CloverSchnorrShare{}
 		sc.ReadFromFile(ids[i])
-		signers[i] = NewSchnorrSigningCeremony(agentKeys[ids[i]], agentCerts, sc)
+		signers[i] = NewSchnorrSigningCeremony(caCert, agentKeys[ids[i]], agentCerts, sc)
 	}
 
 	var err error
 	roun1x := make([]*thresholdagent.SchnorrRound1Msg, len(ids))
 	for i := 0; i < len(signers); i++ {
 		roun1x[i], err = signers[i].Round1(&thresholdagent.SchnorrRound0Msg{
-			SessionId: "session 1",
-			SType:     thresholdagent.SignatureType_SCHNORRv1,
-			Ids:       ids,
-			Message:   message,
+			SessionId:   "session 1",
+			SType:       thresholdagent.SignatureType_SCHNORRv1,
+			SignerCerts: signerCerts,
+			Message:     message,
 		})
 		assert.Nil(t, err)
 	}
