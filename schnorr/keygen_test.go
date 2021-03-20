@@ -61,13 +61,13 @@ func TestKeyGen(t *testing.T) {
 
 	roun2x := make([][]*thresholdagent.SchnorrRound2Msg, len(ids))
 	for i := 0; i < len(players); i++ {
-		roun2x[i], err = players[i].Round2(filter(int32(players[i].ID.Int64()), roun1x)...)
+		roun2x[i], err = players[i].Round2(FilterRound1(int32(players[i].ID.Int64()), roun1x)...)
 		assert.Nil(t, err)
 	}
 
 	roun3x := make([]*thresholdagent.SchnorrRound3Msg, len(ids))
 	for i := 0; i < len(players); i++ {
-		roun3x[i], err = players[i].Round3(filter2(int32(players[i].ID.Int64()), roun2x)...)
+		roun3x[i], err = players[i].Round3(FilterRound2(int32(players[i].ID.Int64()), roun2x)...)
 		assert.Nil(t, err)
 		players[i].WriteToFile()
 	}
@@ -76,25 +76,4 @@ func TestKeyGen(t *testing.T) {
 	computedPubkey := crypto.ScalarBaseMult(tss.EC(), secret)
 	assert.Equal(t, players[0].GetPublicKey(), computedPubkey)
 
-}
-
-func filter2(id int32, roundx [][]*thresholdagent.SchnorrRound2Msg) []*thresholdagent.SchnorrRound2Msg {
-	var result []*thresholdagent.SchnorrRound2Msg
-	for _, line := range roundx {
-		for _, next := range line {
-			if next.ReceiverId == id && next.SenderId != id {
-				result = append(result, next)
-			}
-		}
-	}
-	return result
-}
-func filter(id int32, roundx []*thresholdagent.SchnorrRound1Msg) []*thresholdagent.SchnorrRound1Msg {
-	var result []*thresholdagent.SchnorrRound1Msg
-	for _, next := range roundx {
-		if next.SenderId != id {
-			result = append(result, next)
-		}
-	}
-	return result
 }
