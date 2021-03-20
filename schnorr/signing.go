@@ -154,3 +154,12 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 	//verify signature
 	return sgn, nil
 }
+func FilterRound3(id int32, roundx []*thresholdagent.SchnorrRound3Msg) []*thresholdagent.SchnorrRound3Msg {
+	var result []*thresholdagent.SchnorrRound3Msg
+	for _, next := range roundx {
+		if next.SenderId != id {
+			result = append(result, next)
+		}
+	}
+	return result
+}

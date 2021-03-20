@@ -230,7 +230,28 @@ func (kg *SchnorrKeyGen) Round3(round2s ...*thresholdagent.SchnorrRound2Msg) (*t
 	}, nil
 }
 
-func print(data interface{}) {
+func Print(data interface{}) {
 	buffer, _ := json.Marshal(&data)
 	println(string(buffer))
+}
+
+func FilterRound2(id int32, roundx [][]*thresholdagent.SchnorrRound2Msg) []*thresholdagent.SchnorrRound2Msg {
+	var result []*thresholdagent.SchnorrRound2Msg
+	for _, line := range roundx {
+		for _, next := range line {
+			if next.ReceiverId == id && next.SenderId != id {
+				result = append(result, next)
+			}
+		}
+	}
+	return result
+}
+func FilterRound1(id int32, roundx []*thresholdagent.SchnorrRound1Msg) []*thresholdagent.SchnorrRound1Msg {
+	var result []*thresholdagent.SchnorrRound1Msg
+	for _, next := range roundx {
+		if next.SenderId != id {
+			result = append(result, next)
+		}
+	}
+	return result
 }

@@ -61,28 +61,19 @@ func TestSigning(t *testing.T) {
 
 	roun2x := make([][]*thresholdagent.SchnorrRound2Msg, len(ids))
 	for i := 0; i < len(signers); i++ {
-		roun2x[i], err = signers[i].Round2(filter(int32(signers[i].ID.Int64()), roun1x)...)
+		roun2x[i], err = signers[i].Round2(FilterRound1(int32(signers[i].ID.Int64()), roun1x)...)
 		assert.Nil(t, err)
 	}
 
 	roun3x := make([]*thresholdagent.SchnorrRound3Msg, len(ids))
 	for i := 0; i < len(signers); i++ {
-		roun3x[i], err = signers[i].Round3(filter2(int32(signers[i].ID.Int64()), roun2x)...)
+		roun3x[i], err = signers[i].Round3(FilterRound2(int32(signers[i].ID.Int64()), roun2x)...)
 		assert.Nil(t, err)
 	}
 	roun4x := make([]*thresholdagent.SchnorrSignature, len(ids))
 	for i := 0; i < len(signers); i++ {
-		roun4x[i], err = signers[i].Round4(filter3i(int32(signers[i].ID.Int64()), roun3x)...)
+		roun4x[i], err = signers[i].Round4(FilterRound3(int32(signers[i].ID.Int64()), roun3x)...)
 		assert.Nil(t, err)
 		assert.True(t, Verify(signers[i].round0.SType, roun4x[i], message, signers[i].PublicKey()))
 	}
-}
-func filter3i(id int32, roundx []*thresholdagent.SchnorrRound3Msg) []*thresholdagent.SchnorrRound3Msg {
-	var result []*thresholdagent.SchnorrRound3Msg
-	for _, next := range roundx {
-		if next.SenderId != id {
-			result = append(result, next)
-		}
-	}
-	return result
 }
