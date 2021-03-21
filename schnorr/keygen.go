@@ -64,6 +64,10 @@ func NewSchnorrKeyGen(sessionId string, caCert *x509.Certificate, agentKey *ecds
 		SessionId:      sessionId,
 	}
 }
+func (kg *SchnorrKeyGen) GetAgentCerts() map[int32]*x509.Certificate {
+	return kg.agentCerts
+}
+
 func (kg *SchnorrKeyGen) GetCertificate() *x509.Certificate {
 	return kg.agentCerts[kg.Id()]
 }
