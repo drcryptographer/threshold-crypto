@@ -42,7 +42,7 @@ func TestSigning(t *testing.T) {
 	for i := 0; i < len(ids); i++ {
 		sc := &CloverSchnorrShare{}
 		sc.ReadFromFile(ids[i])
-		signers[i] = NewSchnorrSigningCeremony(caCert, agentKeys[ids[i]], agentCerts, sc)
+		signers[i] = NewSchnorrSigningCeremony("session 1", caCert, agentKeys[ids[i]], agentCerts, sc)
 	}
 
 	var err error

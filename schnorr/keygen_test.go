@@ -43,7 +43,7 @@ func TestKeyGen(t *testing.T) {
 	players := make([]SchnorrKeyGen, len(ids))
 	threshold := 3
 	for i := 0; i < len(players); i++ {
-		players[i] = NewSchnorrKeyGen(caCert, agentKeys[int32(i+1)], agentCerts, ids[i])
+		players[i] = NewSchnorrKeyGen("session 1", caCert, agentKeys[int32(i+1)], agentCerts, ids[i])
 	}
 	var err error
 	roun1x := make([]*thresholdagent.SchnorrRound1Msg, len(ids))
