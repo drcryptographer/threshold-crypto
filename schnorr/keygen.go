@@ -47,7 +47,7 @@ type SchnorrKeyGen struct {
 	round0     *thresholdagent.SchnorrRound0Msg
 }
 
-func NewSchnorrKeyGen(caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, id int32) SchnorrKeyGen {
+func NewSchnorrKeyGen(sessionId string, caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, id int32) SchnorrKeyGen {
 	return SchnorrKeyGen{
 		Share: &vss.Share{
 			Threshold: 0,
@@ -61,8 +61,13 @@ func NewSchnorrKeyGen(caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agen
 		agentKey:       agentKey,
 		agentCerts:     agentCerts,
 		caCert:         caCert,
+		SessionId:      sessionId,
 	}
 }
+func (kg *SchnorrKeyGen) GetAgentCerts() map[int32]*x509.Certificate {
+	return kg.agentCerts
+}
+
 func (kg *SchnorrKeyGen) GetCertificate() *x509.Certificate {
 	return kg.agentCerts[kg.Id()]
 }

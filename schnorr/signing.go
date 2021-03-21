@@ -37,8 +37,8 @@ type SchnorrSigningCeremony struct {
 	round0  *thresholdagent.SchnorrRound0Msg
 }
 
-func NewSchnorrSigningCeremony(caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, share *CloverSchnorrShare) *SchnorrSigningCeremony {
-	dkg := NewSchnorrKeyGen(caCert, agentKey, agentCerts, share.Id())
+func NewSchnorrSigningCeremony(sessionId string, caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, share *CloverSchnorrShare) *SchnorrSigningCeremony {
+	dkg := NewSchnorrKeyGen(sessionId, caCert, agentKey, agentCerts, share.Id())
 	dkg.Threshold = share.Threshold
 	return &SchnorrSigningCeremony{
 		CloverSchnorrShare: share,
