@@ -71,5 +71,20 @@ func CreateWriteCertificate(totalPlayer int) error {
 			return err
 		}
 	}
+
+	var certAgent, err = CreatePlainServerCert(RootPassword, rootPrivateKeyPem, rootSignedCertPem,
+		"localhost", "US", "SF", "Clover Finance", "CLV",
+		dnsNames, []string{"0.0.0.0", "127.0.0.1"}, 20, 23243534)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile("../shares/server.key", []byte(certAgent.PrivateKeyPem), 0644)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile("../shares/server.cert", []byte(certAgent.SignedCertPem), 0644)
+	if err != nil {
+		return err
+	}
 	return nil
 }
