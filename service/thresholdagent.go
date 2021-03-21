@@ -43,6 +43,9 @@ func (tas *ThresholdAgentService) DkgSchnorrRound1(ctx context.Context, round0 *
 func (tas *ThresholdAgentService) DkgSchnorrRound2(ctx context.Context, round1s *thresholdagent.SchnorrRound1MsgList) (*thresholdagent.SchnorrRound2MsgList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DkgSchnorrRound2 not implemented")
 }
+func (tas *ThresholdAgentService) DkgSchnorrRoundFinal(ctx context.Context, round2s *thresholdagent.ResultMsg) (*thresholdagent.ResultMsg, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DkgSchnorrRound3 not implemented")
+}
 func (tas *ThresholdAgentService) DkgSchnorrRound3(ctx context.Context, round2s *thresholdagent.SchnorrRound2MsgList) (*thresholdagent.SchnorrRound3Msg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DkgSchnorrRound3 not implemented")
 }

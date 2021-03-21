@@ -76,14 +76,20 @@ message SchnorrSignature {
 }
 
 message SchnorrRound1MsgList {
-  repeated SchnorrRound1Msg messages=1;
+  repeated SchnorrRound1Msg messages = 1;
 }
 message SchnorrRound2MsgList {
-  repeated SchnorrRound2Msg messages=1;
+  repeated SchnorrRound2Msg messages = 1;
 }
 message SchnorrRound3MsgList {
-  repeated SchnorrRound3Msg messages=1;
+  repeated SchnorrRound3Msg messages = 1;
 }
+
+message ResultMsg {
+  string SessionId = 1;
+  Status status = 2;
+}
+
 
 service ThresholdAgent {
   rpc Authenticate(AuthRequest) returns (AuthResponse) {}
@@ -91,6 +97,7 @@ service ThresholdAgent {
   rpc DkgSchnorrRound1(SchnorrRound0Msg) returns (SchnorrRound1Msg) {}
   rpc DkgSchnorrRound2(SchnorrRound1MsgList) returns (SchnorrRound2MsgList) {}
   rpc DkgSchnorrRound3(SchnorrRound2MsgList) returns (SchnorrRound3Msg) {}
+  rpc DkgSchnorrRoundFinal(ResultMsg) returns (ResultMsg) {}
 
   rpc SchnorrSignRound1(SchnorrRound0Msg) returns (SchnorrRound1Msg) {}
   rpc SchnorrSignRound2(SchnorrRound1MsgList) returns (SchnorrRound2MsgList) {}
