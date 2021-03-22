@@ -24,6 +24,38 @@ type CloverSchnorrShare struct {
 	vss.Share
 }
 
+func (cs *CloverSchnorrShare) MarshalJSON() ([]byte, error) {
+	Poly, _ := json.Marshal(&cs.Vs)
+	Share, _ := json.Marshal(&cs.Share)
+	return json.Marshal(&struct {
+		Share []byte
+		Poly  []byte
+	}{
+		Share: Share,
+		Poly:  Poly,
+	})
+}
+
+func (p *CloverSchnorrShare) UnmarshalJSON(payload []byte) error {
+	aux := &struct {
+		Share []byte
+		Poly  []byte
+	}{}
+	if err := json.Unmarshal(payload, &aux); err != nil {
+		return err
+	}
+
+	json.Unmarshal(aux.Share, &p.Share)
+	json.Unmarshal(aux.Poly, &p.Vs)
+	for i := 0; i < len(p.Vs); i++ {
+		p.Vs[i].SetCurve(tss.EC())
+		if !p.Vs[i].IsOnCurve() {
+			return fmt.Errorf("poly points are not on curve")
+		}
+	}
+	return nil
+}
+
 func (cs *CloverSchnorrShare) ReadFromFile(id int32) error {
 	buffer, _ := ioutil.ReadFile(fmt.Sprintf("../shares/schnorr_share_%d.json", id))
 	return json.Unmarshal(buffer, cs)
@@ -31,6 +63,14 @@ func (cs *CloverSchnorrShare) ReadFromFile(id int32) error {
 
 func (cs *CloverSchnorrShare) Id() int32 {
 	return int32(cs.ID.Int64())
+}
+
+func (cs *CloverSchnorrShare) GetPublicKey() *crypto.ECPoint {
+	return cs.Vs[0]
+}
+
+func (cs *CloverSchnorrShare) GetEthPublicKey() []byte {
+	return elliptic.MarshalCompressed(tss.EC(), cs.Vs[0].X(), cs.Vs[0].Y())
 }
 
 type SchnorrKeyGen struct {
