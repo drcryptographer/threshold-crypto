@@ -25,9 +25,13 @@ message SchnorrRound0Msg {
   SignatureType  sType = 2;
   repeated bytes signerCerts = 3;
   oneof request {
-    int32 threshold = 4;
-    bytes message = 5;
+    int32 threshold = 4; //for keygen
+    SignRequest signing = 5; //for sign
   }
+}
+message SignRequest {
+  bytes publicKey = 1;
+  bytes message = 2;
 }
 
 message SchnorrRound1Msg {

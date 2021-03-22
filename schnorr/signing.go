@@ -69,7 +69,7 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 		return nil, err
 	}
 	r_i := sc.dkg.Share.Share
-	k := getScalar(sc.round0.SType, sc.round0.GetMessage(), sc.R(), sc.PublicKey())
+	k := getScalar(sc.round0.SType, sc.round0.GetSigning().GetMessage(), sc.R(), sc.PublicKey())
 
 	sigma_i := new(big.Int).Mul(k, sc.Share.Share)
 	sigma_i = new(big.Int).Add(sigma_i, r_i)
@@ -148,7 +148,7 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 		R:        buffer,
 		S:        s.Bytes(),
 	}
-	if !Verify(sc.round0.SType, sgn, sc.round0.GetMessage(), sc.PublicKey()) {
+	if !Verify(sc.round0.SType, sgn, sc.round0.GetSigning().GetMessage(), sc.PublicKey()) {
 		return nil, fmt.Errorf("the computed signature is not valid")
 	}
 	//verify signature
