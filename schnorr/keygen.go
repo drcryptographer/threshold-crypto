@@ -2,6 +2,7 @@ package schnorr
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/crypto/vss"
 	"github.com/binance-chain/tss-lib/tss"
+	_ "github.com/btcsuite/btcutil"
 	"github.com/clover-network/threshold-crypto/encrypting"
 	"github.com/clover-network/threshold-crypto/feldmanvss"
 	"github.com/clover-network/threshold-crypto/thresholdagent"
@@ -79,6 +81,10 @@ func (kg *SchnorrKeyGen) GetSecretShare() *CloverSchnorrShare {
 }
 func (kg *SchnorrKeyGen) GetPublicKey() *crypto.ECPoint {
 	return kg.poly[0]
+}
+
+func (kg *SchnorrKeyGen) GetEthPublicKey() string {
+	return fmt.Sprintf("%x", elliptic.Marshal(tss.EC(), kg.poly[0].X(), kg.poly[0].Y()))
 }
 
 func (kg *SchnorrKeyGen) WriteToFile() {
