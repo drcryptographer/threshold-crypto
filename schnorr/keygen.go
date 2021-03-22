@@ -231,12 +231,11 @@ func (kg *SchnorrKeyGen) Round3(round2s ...*thresholdagent.SchnorrRound2Msg) (*t
 	//sum share
 	//calculate public key
 	//store share
-	pubkey, _ := poly[0].GobEncode()
 	return &thresholdagent.SchnorrRound3Msg{
 		SessionId: kg.SessionId,
 		SenderId:  kg.Id(),
 		Data: &thresholdagent.SchnorrRound3Msg_PublicKey{
-			PublicKey: pubkey,
+			PublicKey: []byte(kg.GetEthPublicKey()),
 		},
 	}, nil
 }
