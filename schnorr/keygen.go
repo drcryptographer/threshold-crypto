@@ -83,8 +83,8 @@ func (kg *SchnorrKeyGen) GetPublicKey() *crypto.ECPoint {
 	return kg.poly[0]
 }
 
-func (kg *SchnorrKeyGen) GetEthPublicKey() string {
-	return fmt.Sprintf("%x", elliptic.Marshal(tss.EC(), kg.poly[0].X(), kg.poly[0].Y()))
+func (kg *SchnorrKeyGen) GetEthPublicKey() []byte {
+	return elliptic.MarshalCompressed(tss.EC(), kg.poly[0].X(), kg.poly[0].Y())
 }
 
 func (kg *SchnorrKeyGen) WriteToFile() {
@@ -235,7 +235,7 @@ func (kg *SchnorrKeyGen) Round3(round2s ...*thresholdagent.SchnorrRound2Msg) (*t
 		SessionId: kg.SessionId,
 		SenderId:  kg.Id(),
 		Data: &thresholdagent.SchnorrRound3Msg_PublicKey{
-			PublicKey: []byte(kg.GetEthPublicKey()),
+			PublicKey: kg.GetEthPublicKey(),
 		},
 	}, nil
 }
