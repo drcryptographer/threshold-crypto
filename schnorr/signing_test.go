@@ -53,8 +53,11 @@ func TestSigning(t *testing.T) {
 			SessionId:   "session 1",
 			SType:       thresholdagent.SignatureType_SCHNORRv1,
 			SignerCerts: signerCerts,
-			Request: &thresholdagent.SchnorrRound0Msg_Message{
-				Message: message,
+			Request: &thresholdagent.SchnorrRound0Msg_Signing{
+				Signing: &thresholdagent.SignRequest{
+					PublicKey: nil,
+					Message:   message,
+				},
 			},
 		})
 		assert.Nil(t, err)

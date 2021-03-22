@@ -29,8 +29,12 @@ func (cs *CloverSchnorrShare) ReadFromFile(id int32) error {
 	return json.Unmarshal(buffer, cs)
 }
 
-func (cs *CloverSchnorrShare) Id() int32 {
-	return int32(cs.ID.Int64())
+func (cs *CloverSchnorrShare) GetPublicKey() *crypto.ECPoint {
+	return cs.Vs[0]
+}
+
+func (cs *CloverSchnorrShare) GetEthPublicKey() []byte {
+	return elliptic.MarshalCompressed(tss.EC(), cs.Vs[0].X(), cs.Vs[0].Y())
 }
 
 type SchnorrKeyGen struct {
