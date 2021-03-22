@@ -33,6 +33,7 @@ func TestSigning(t *testing.T) {
 	signerCerts[2], _ = ioutil.ReadFile("../shares/agent3.cert")
 	signerCerts[3], _ = ioutil.ReadFile("../shares/agent4.cert")
 
+	//test
 	var caCert, _ = utils.LoadCertificateFromFilePath("../shares/ca.cert")
 
 	ids := []int32{1, 2, 3, 4} //16
