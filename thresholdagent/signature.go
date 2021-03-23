@@ -9,10 +9,10 @@ import (
 	"math/big"
 )
 
-func GetScalar(sType SignatureType, message []byte, r []byte, PublicKey *crypto.ECPoint) *big.Int {
+func GetScalar(sType SignatureType, message [32]byte, r []byte, PublicKey *crypto.ECPoint) *big.Int {
 	switch sType {
 	case SignatureType_SCHNORRv1:
-		return utils.GetScalar1(message, r, PublicKey)
+		return utils.GetBip340E(PublicKey.X(), PublicKey.Y(), r, message)
 	case SignatureType_SCHNORRv2:
 		return utils.GetScalar2(message, r, PublicKey)
 	}
@@ -27,7 +27,10 @@ func (sgn *SchnorrSignature) Verify() bool {
 	dec, _ := eth.DecompressPubkey(sgn.PublicKey)
 	pubKey, _ := crypto.NewECPoint(tss.EC(), dec.X, dec.Y)
 
-	k := GetScalar(sgn.SType, sgn.SigningData, sgn.R, pubKey)
+	var msg [32]byte
+	copy(msg[:], sgn.SigningData)
+
+	k := GetScalar(sgn.SType, msg, sgn.R, pubKey)
 	negK := new(big.Int).Sub(curve.Params().N, k)
 
 	//sG - kP ?= R

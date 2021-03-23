@@ -2,6 +2,7 @@ package schnorr
 
 import (
 	"crypto/ecdsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"github.com/clover-network/threshold-crypto/thresholdagent"
 	"github.com/clover-network/threshold-crypto/utils"
@@ -37,7 +38,10 @@ func TestSigning(t *testing.T) {
 	var caCert, _ = utils.LoadCertificateFromFilePath("../shares/ca.cert")
 
 	ids := []int32{1, 2, 3, 4} //16
-	message := []byte{5, 4, 7, 6}
+
+	hash := sha256.New()
+	hash.Write([]byte{5, 4, 7, 6})
+	message := hash.Sum(nil)
 
 	signers := make([]*SchnorrSigningCeremony, len(ids))
 	for i := 0; i < len(ids); i++ {
