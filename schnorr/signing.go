@@ -32,9 +32,9 @@ func Verify(sType thresholdagent.SignatureType, sgn *thresholdagent.SchnorrSigna
 
 type SchnorrSigningCeremony struct {
 	*CloverSchnorrShare
-	dkg     *SchnorrKeyGen
+	Dkg     *SchnorrKeyGen
 	sigma_i *big.Int
-	round0  *thresholdagent.SchnorrRound0Msg
+	Round0  *thresholdagent.SchnorrRound0Msg
 }
 
 func NewSchnorrSigningCeremony(sessionId string, caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, share *CloverSchnorrShare) *SchnorrSigningCeremony {
@@ -42,7 +42,7 @@ func NewSchnorrSigningCeremony(sessionId string, caCert *x509.Certificate, agent
 	dkg.Threshold = share.Threshold
 	return &SchnorrSigningCeremony{
 		CloverSchnorrShare: share,
-		dkg:                &dkg,
+		Dkg:                &dkg,
 	}
 }
 
@@ -51,25 +51,25 @@ func (sc *SchnorrSigningCeremony) PublicKey() *crypto.ECPoint {
 }
 
 func (sc *SchnorrSigningCeremony) R() *crypto.ECPoint {
-	return sc.dkg.GetPublicKey()
+	return sc.Dkg.GetPublicKey()
 }
 
 func (sc *SchnorrSigningCeremony) Round1(round0 *thresholdagent.SchnorrRound0Msg) (*thresholdagent.SchnorrRound1Msg, error) {
-	sc.round0 = round0
-	return sc.dkg.Round1(round0)
+	sc.Round0 = round0
+	return sc.Dkg.Round1(round0)
 }
 
 func (sc *SchnorrSigningCeremony) Round2(round1 ...*thresholdagent.SchnorrRound1Msg) ([]*thresholdagent.SchnorrRound2Msg, error) {
-	return sc.dkg.Round2(round1...)
+	return sc.Dkg.Round2(round1...)
 }
 
 func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2Msg) (*thresholdagent.SchnorrRound3Msg, error) {
-	_, err := sc.dkg.Round3(round2...)
+	_, err := sc.Dkg.Round3(round2...)
 	if err != nil {
 		return nil, err
 	}
-	r_i := sc.dkg.Share.Share
-	k := getScalar(sc.round0.SType, sc.round0.GetSigning().GetMessage(), sc.R(), sc.PublicKey())
+	r_i := sc.Dkg.Share.Share
+	k := getScalar(sc.Round0.SType, sc.Round0.GetSigning().GetMessage(), sc.R(), sc.PublicKey())
 
 	sigma_i := new(big.Int).Mul(k, sc.Share.Share)
 	sigma_i = new(big.Int).Add(sigma_i, r_i)
@@ -77,8 +77,8 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 
 	sc.sigma_i = sigma_i
 	return &thresholdagent.SchnorrRound3Msg{
-		SessionId: sc.dkg.SessionId,
-		SenderId:  sc.dkg.Id(),
+		SessionId: sc.Dkg.SessionId,
+		SenderId:  sc.Dkg.Id(),
 		Data: &thresholdagent.SchnorrRound3Msg_SigmaI{
 			SigmaI: sigma_i.Bytes(),
 		},
@@ -142,13 +142,13 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 	if err != nil {
 		return nil, err
 	}
-	buffer, _ := sc.dkg.GetPublicKey().GobEncode()
+	buffer, _ := sc.Dkg.GetPublicKey().GobEncode()
 	sgn := &thresholdagent.SchnorrSignature{
-		SenderId: sc.dkg.Id(),
+		SenderId: sc.Dkg.Id(),
 		R:        buffer,
 		S:        s.Bytes(),
 	}
-	if !Verify(sc.round0.SType, sgn, sc.round0.GetSigning().GetMessage(), sc.PublicKey()) {
+	if !Verify(sc.Round0.SType, sgn, sc.Round0.GetSigning().GetMessage(), sc.PublicKey()) {
 		return nil, fmt.Errorf("the computed signature is not valid")
 	}
 	//verify signature
