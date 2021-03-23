@@ -73,10 +73,11 @@ message AuthResponse{
 }
 
 message SchnorrSignature {
-  string SessionId = 1;
-  int32  SenderId = 2;
-  bytes R = 3;
-  bytes S = 4;
+  SignatureType sType = 1;
+  bytes publicKey = 2;
+  bytes signingData = 3;
+  bytes R = 4;
+  bytes S = 5;
 }
 
 message SchnorrRound1MsgList {

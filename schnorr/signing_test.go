@@ -78,6 +78,6 @@ func TestSigning(t *testing.T) {
 	for i := 0; i < len(signers); i++ {
 		roun4x[i], err = signers[i].Round4(FilterRound3(int32(signers[i].ID.Int64()), roun3x)...)
 		assert.Nil(t, err)
-		assert.True(t, Verify(signers[i].round0.SType, roun4x[i], message, signers[i].PublicKey()))
+		assert.True(t, roun4x[i].Verify())
 	}
 }
