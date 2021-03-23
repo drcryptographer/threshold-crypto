@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/crypto/vss"
+	"github.com/binance-chain/tss-lib/tss"
 	"github.com/ebfe/keccak"
 	"io"
 	"math/big"
@@ -17,28 +18,27 @@ import (
 )
 
 //bitcoin schnorr
-func GetScalar1(message []byte, R, PublicKey *crypto.ECPoint) *big.Int {
+func GetScalar1(message []byte, r []byte, PublicKey *crypto.ECPoint) *big.Int {
 	sha := sha256.New()
-	sha.Write(message)
-	buffer, _ := R.GobEncode()
-	sha.Write(buffer)
 
-	buffer, _ = PublicKey.GobEncode()
-	sha.Write(buffer)
+	sha.Write(r)
+	compressedPubKey := elliptic.MarshalCompressed(tss.EC(), PublicKey.X(), PublicKey.Y())
+	sha.Write(compressedPubKey)
+	sha.Write(message)
 	result := big.NewInt(0).SetBytes(sha.Sum(nil))
 	return result
 }
 
 //ethereum schnorr
-func GetScalar2(message []byte, R, PublicKey *crypto.ECPoint) *big.Int {
-	sha := keccak.New256()
-	sha.Write(message)
-	buffer, _ := R.GobEncode()
-	sha.Write(buffer)
+func GetScalar2(message []byte, r []byte, PublicKey *crypto.ECPoint) *big.Int {
+	keccakHash := keccak.New256()
 
-	buffer, _ = PublicKey.GobEncode()
-	sha.Write(buffer)
-	result := big.NewInt(0).SetBytes(sha.Sum(nil))
+	keccakHash.Write(r)
+	compressedPubKey := elliptic.MarshalCompressed(tss.EC(), PublicKey.X(), PublicKey.Y())
+	keccakHash.Write(compressedPubKey)
+	keccakHash.Write(message)
+
+	result := big.NewInt(0).SetBytes(keccakHash.Sum(nil))
 	return result
 }
 

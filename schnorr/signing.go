@@ -50,7 +50,7 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 		return nil, err
 	}
 	r_i := sc.Dkg.Share.Share
-	k := thresholdagent.GetScalar(sc.Round0.SType, sc.Round0.GetSigning().GetMessage(), sc.R(), sc.PublicKey())
+	k := thresholdagent.GetScalar(sc.Round0.SType, sc.Round0.GetSigning().GetMessage(), sc.R().X().Bytes(), sc.PublicKey())
 
 	sigma_i := new(big.Int).Mul(k, sc.Share.Share)
 	sigma_i = new(big.Int).Add(sigma_i, r_i)
@@ -87,12 +87,12 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 	if err != nil {
 		return nil, err
 	}
-	buffer, _ := sc.Dkg.GetPublicKey().GobEncode()
+	R := sc.Dkg.GetPublicKey()
 	sgn := &thresholdagent.SchnorrSignature{
 		SType:       sc.Round0.SType,
-		PublicKey:   sc.GetEthPublicKey(),
+		PublicKey:   sc.GetCompressedPublicKey(),
 		SigningData: sc.Round0.GetSigning().GetMessage(),
-		R:           buffer,
+		R:           R.X().Bytes(),
 		S:           s.Bytes(),
 	}
 	if !sgn.Verify() {

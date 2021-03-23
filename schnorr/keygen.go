@@ -65,11 +65,16 @@ func (cs *CloverSchnorrShare) Id() int32 {
 	return int32(cs.ID.Int64())
 }
 
-func (cs *CloverSchnorrShare) GetPublicKey() *crypto.ECPoint {
-	return cs.Vs[0]
+func (cs *CloverSchnorrShare) GetPublicKey() *ecdsa.PublicKey {
+	var key = &ecdsa.PublicKey{
+		Curve: tss.EC(),
+		X:     cs.Vs[0].X(),
+		Y:     cs.Vs[0].Y(),
+	}
+	return key
 }
 
-func (cs *CloverSchnorrShare) GetEthPublicKey() []byte {
+func (cs *CloverSchnorrShare) GetCompressedPublicKey() []byte {
 	return elliptic.MarshalCompressed(tss.EC(), cs.Vs[0].X(), cs.Vs[0].Y())
 }
 
@@ -123,7 +128,7 @@ func (kg *SchnorrKeyGen) GetPublicKey() *crypto.ECPoint {
 	return kg.poly[0]
 }
 
-func (kg *SchnorrKeyGen) GetEthPublicKey() []byte {
+func (kg *SchnorrKeyGen) GetCompressedPublicKey() []byte {
 	return elliptic.MarshalCompressed(tss.EC(), kg.poly[0].X(), kg.poly[0].Y())
 }
 
@@ -266,23 +271,13 @@ func (kg *SchnorrKeyGen) Round3(round2s ...*thresholdagent.SchnorrRound2Msg) (*t
 	kg.Share = share
 	kg.poly = poly
 
-	//decrypt share
-	//verify share
-	//sum share
-	//calculate public key
-	//store share
 	return &thresholdagent.SchnorrRound3Msg{
 		SessionId: kg.SessionId,
 		SenderId:  kg.Id(),
 		Data: &thresholdagent.SchnorrRound3Msg_PublicKey{
-			PublicKey: kg.GetEthPublicKey(),
+			PublicKey: kg.GetCompressedPublicKey(),
 		},
 	}, nil
-}
-
-func Print(data interface{}) {
-	buffer, _ := json.Marshal(&data)
-	println(string(buffer))
 }
 
 func FilterRound2(id int32, roundx [][]*thresholdagent.SchnorrRound2Msg) []*thresholdagent.SchnorrRound2Msg {
