@@ -8,6 +8,7 @@ import (
 	"github.com/binance-chain/tss-lib/crypto/vss"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/clover-network/threshold-crypto/thresholdagent"
+	"github.com/clover-network/threshold-crypto/utils"
 	"math/big"
 )
 
@@ -52,7 +53,7 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 	r_i := sc.Dkg.Share.Share
 	var msg [32]byte
 	copy(msg[:], sc.Round0.GetSigning().GetMessage())
-	k := thresholdagent.GetScalar(sc.Round0.SType, msg, sc.R().X().Bytes(), sc.PublicKey())
+	k := thresholdagent.GetScalar(sc.Round0.SType, msg, utils.IntToByte(sc.R().X()), sc.PublicKey())
 
 	sigma_i := new(big.Int).Mul(k, sc.Share.Share)
 	sigma_i = new(big.Int).Add(sigma_i, r_i)
@@ -90,6 +91,8 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 		return nil, err
 	}
 	R := sc.Dkg.GetPublicKey()
+
+	fmt.Printf("--------------------------------%t\n", IsEven(R.Y()))
 	sgn := &thresholdagent.SchnorrSignature{
 		SType:       sc.Round0.SType,
 		PublicKey:   sc.GetCompressedPublicKey(),
@@ -103,6 +106,11 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 	//verify signature
 	return sgn, nil
 }
+
+func IsEven(b *big.Int) bool {
+	return b.Bit(0) == 0
+}
+
 func FilterRound3(id int32, roundx []*thresholdagent.SchnorrRound3Msg) []*thresholdagent.SchnorrRound3Msg {
 	var result []*thresholdagent.SchnorrRound3Msg
 	for _, next := range roundx {

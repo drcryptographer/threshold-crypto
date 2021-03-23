@@ -18,11 +18,17 @@ import (
 	"strings"
 )
 
+func IntToByte(i *big.Int) []byte {
+	b1, b2 := [32]byte{}, i.Bytes()
+	copy(b1[32-len(b2):], b2)
+	return b1[:]
+}
+
 //bitcoin schnorr
 func GetBip340E(Px, Py *big.Int, rX []byte, m [32]byte) *big.Int {
 	bundle := bytes.Buffer{}
 	bundle.Write(rX)
-	bundle.Write(Px.Bytes())
+	bundle.Write(IntToByte(Px))
 	bundle.Write(m[:])
 	return new(big.Int).Mod(
 		new(big.Int).SetBytes(HashWithTag("BIP0340/challenge", bundle.Bytes())),
