@@ -7,12 +7,40 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/crypto/vss"
+	"github.com/ebfe/keccak"
 	"io"
 	"math/big"
 	"strconv"
 	"strings"
 )
+
+//bitcoin schnorr
+func GetScalar1(message []byte, R, PublicKey *crypto.ECPoint) *big.Int {
+	sha := sha256.New()
+	sha.Write(message)
+	buffer, _ := R.GobEncode()
+	sha.Write(buffer)
+
+	buffer, _ = PublicKey.GobEncode()
+	sha.Write(buffer)
+	result := big.NewInt(0).SetBytes(sha.Sum(nil))
+	return result
+}
+
+//ethereum schnorr
+func GetScalar2(message []byte, R, PublicKey *crypto.ECPoint) *big.Int {
+	sha := keccak.New256()
+	sha.Write(message)
+	buffer, _ := R.GobEncode()
+	sha.Write(buffer)
+
+	buffer, _ = PublicKey.GobEncode()
+	sha.Write(buffer)
+	result := big.NewInt(0).SetBytes(sha.Sum(nil))
+	return result
+}
 
 func ScalarECCBaseMult(curve elliptic.Curve, k *big.Int) *Point {
 	x, y := curve.ScalarBaseMult(k.Bytes())

@@ -2,33 +2,14 @@ package schnorr
 
 import (
 	"crypto/ecdsa"
-	"crypto/sha256"
 	"crypto/x509"
 	"fmt"
 	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/crypto/vss"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/clover-network/threshold-crypto/thresholdagent"
-	"github.com/ebfe/keccak"
 	"math/big"
 )
-
-func Verify(sType thresholdagent.SignatureType, sgn *thresholdagent.SchnorrSignature, message []byte, pubKey *crypto.ECPoint) bool {
-	curve := tss.EC()
-	R := &crypto.ECPoint{}
-	R.GobDecode(sgn.R)
-	// s = r + k * x
-	sigma := new(big.Int).SetBytes(sgn.S)
-	k := getScalar(sType, message, R, pubKey)
-	negK := new(big.Int).Sub(curve.Params().N, k)
-
-	//sG - kP ?= R
-	sG := crypto.ScalarBaseMult(curve, sigma)
-	kP := pubKey.ScalarMult(negK)
-	RPrime, _ := sG.Add(kP)
-
-	return RPrime.Equals(R)
-}
 
 type SchnorrSigningCeremony struct {
 	*CloverSchnorrShare
@@ -69,7 +50,7 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 		return nil, err
 	}
 	r_i := sc.Dkg.Share.Share
-	k := getScalar(sc.Round0.SType, sc.Round0.GetSigning().GetMessage(), sc.R(), sc.PublicKey())
+	k := thresholdagent.GetScalar(sc.Round0.SType, sc.Round0.GetSigning().GetMessage(), sc.R(), sc.PublicKey())
 
 	sigma_i := new(big.Int).Mul(k, sc.Share.Share)
 	sigma_i = new(big.Int).Add(sigma_i, r_i)
@@ -83,42 +64,6 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 			SigmaI: sigma_i.Bytes(),
 		},
 	}, nil
-}
-
-func getScalar(sType thresholdagent.SignatureType, message []byte, R, PublicKey *crypto.ECPoint) *big.Int {
-	switch sType {
-	case thresholdagent.SignatureType_SCHNORRv1:
-		return getScalar1(message, R, PublicKey)
-	case thresholdagent.SignatureType_SCHNORRv2:
-		return getScalar2(message, R, PublicKey)
-	}
-	return big.NewInt(0)
-}
-
-//bitcoin schnorr
-func getScalar1(message []byte, R, PublicKey *crypto.ECPoint) *big.Int {
-	sha := sha256.New()
-	sha.Write(message)
-	buffer, _ := R.GobEncode()
-	sha.Write(buffer)
-
-	buffer, _ = PublicKey.GobEncode()
-	sha.Write(buffer)
-	result := big.NewInt(0).SetBytes(sha.Sum(nil))
-	return result
-}
-
-//ethereum schnorr
-func getScalar2(message []byte, R, PublicKey *crypto.ECPoint) *big.Int {
-	sha := keccak.New256()
-	sha.Write(message)
-	buffer, _ := R.GobEncode()
-	sha.Write(buffer)
-
-	buffer, _ = PublicKey.GobEncode()
-	sha.Write(buffer)
-	result := big.NewInt(0).SetBytes(sha.Sum(nil))
-	return result
 }
 
 func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3Msg) (*thresholdagent.SchnorrSignature, error) {
@@ -144,11 +89,13 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 	}
 	buffer, _ := sc.Dkg.GetPublicKey().GobEncode()
 	sgn := &thresholdagent.SchnorrSignature{
-		SenderId: sc.Dkg.Id(),
-		R:        buffer,
-		S:        s.Bytes(),
+		SType:       sc.Round0.SType,
+		PublicKey:   sc.GetEthPublicKey(),
+		SigningData: sc.Round0.GetSigning().GetMessage(),
+		R:           buffer,
+		S:           s.Bytes(),
 	}
-	if !Verify(sc.Round0.SType, sgn, sc.Round0.GetSigning().GetMessage(), sc.PublicKey()) {
+	if !sgn.Verify() {
 		return nil, fmt.Errorf("the computed signature is not valid")
 	}
 	//verify signature
