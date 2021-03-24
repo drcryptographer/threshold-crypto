@@ -20,6 +20,9 @@ func (sgn *SchnorrSignature) Verify() bool {
 	return false
 }
 func (sgn *SchnorrSignature) VerifyEth() bool {
+	if sgn.SType != SignatureType_SCHNORRv2 {
+		return false
+	}
 	curve := tss.EC()
 	// s = k - xe mod N where Rx, Ry = eG
 	sigma := new(big.Int).SetBytes(sgn.S)
@@ -38,6 +41,9 @@ func (sgn *SchnorrSignature) VerifyEth() bool {
 }
 
 func (sgn *SchnorrSignature) VerifyBip340() bool {
+	if sgn.SType != SignatureType_SCHNORRv1 {
+		return false
+	}
 	curve := tss.EC()
 	// s = r + k * x
 	sigma := new(big.Int).SetBytes(sgn.S)

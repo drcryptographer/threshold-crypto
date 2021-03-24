@@ -13,13 +13,20 @@ import (
 	"testing"
 )
 
-func TestMulSigning(t *testing.T) {
+func TestMulSigningOfSignatureType_SCHNORRv2(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		fmt.Printf("Test %d\n", i+1)
-		TestSigning(t)
+		RunTestSigning(t, thresholdagent.SignatureType_SCHNORRv2)
 	}
 }
-func TestSigning(t *testing.T) {
+
+func TestMulSigningOfSignatureType_SCHNORRv1(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		fmt.Printf("Test %d\n", i+1)
+		RunTestSigning(t, thresholdagent.SignatureType_SCHNORRv1)
+	}
+}
+func RunTestSigning(t *testing.T, sType thresholdagent.SignatureType) {
 	var agentKeys = make(map[int32]*ecdsa.PrivateKey)
 	var agentCerts = make(map[int32]*x509.Certificate)
 
@@ -63,7 +70,7 @@ func TestSigning(t *testing.T) {
 	for i := 0; i < len(signers); i++ {
 		roun1x[i], err = signers[i].Round1(&thresholdagent.SchnorrRound0Msg{
 			SessionId:   "session 1",
-			SType:       thresholdagent.SignatureType_SCHNORRv2,
+			SType:       sType,
 			SignerCerts: signerCerts,
 			Request: &thresholdagent.SchnorrRound0Msg_Signing{
 				Signing: &thresholdagent.SignRequest{
