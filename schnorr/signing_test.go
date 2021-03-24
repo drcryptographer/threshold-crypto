@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"github.com/clover-network/threshold-crypto/thresholdagent"
 	"github.com/clover-network/threshold-crypto/utils"
+	"github.com/fiatjaf/bip340"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"testing"
 )
 
 func TestMulSigning(t *testing.T) {
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 100; i++ {
 		fmt.Printf("Test %d\n", i+1)
 		TestSigning(t)
 	}
@@ -62,7 +63,7 @@ func TestSigning(t *testing.T) {
 	for i := 0; i < len(signers); i++ {
 		roun1x[i], err = signers[i].Round1(&thresholdagent.SchnorrRound0Msg{
 			SessionId:   "session 1",
-			SType:       thresholdagent.SignatureType_SCHNORRv1,
+			SType:       thresholdagent.SignatureType_SCHNORRv2,
 			SignerCerts: signerCerts,
 			Request: &thresholdagent.SchnorrRound0Msg_Signing{
 				Signing: &thresholdagent.SignRequest{
@@ -90,5 +91,21 @@ func TestSigning(t *testing.T) {
 		roun4x[i], err = signers[i].Round4(FilterRound3(int32(signers[i].ID.Int64()), roun3x)...)
 		assert.Nil(t, err)
 		assert.True(t, roun4x[i].Verify())
+
+		if roun4x[0].SType == thresholdagent.SignatureType_SCHNORRv1 {
+			var (
+				publicKey [32]byte
+				message   [32]byte
+				signature [64]byte
+			)
+			copy(publicKey[:], roun4x[0].PublicKey[1:])
+			copy(message[:], roun4x[0].SigningData)
+			copy(signature[:32], roun4x[0].R)
+			copy(signature[32:], roun4x[0].S)
+
+			result, _ := bip340.Verify(publicKey, message, signature)
+			assert.True(t, result)
+		}
+		//
 	}
 }

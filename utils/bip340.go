@@ -5,7 +5,6 @@ import (
 	"crypto/elliptic"
 	"crypto/sha256"
 	"errors"
-	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/ebfe/keccak"
 	"math/big"
@@ -70,15 +69,17 @@ func HashWithTag(tag string, msg []byte) []byte {
 	return h.Sum(nil)
 }
 
-//ethereum schnorr
-func GetScalar2(message [32]byte, r []byte, PublicKey *crypto.ECPoint) *big.Int {
+func GetScalarETH(message []byte, Rx, Ry, Px, Py *big.Int) *big.Int {
 	keccakHash := keccak.New256()
-
-	keccakHash.Write(r)
-	compressedPubKey := elliptic.MarshalCompressed(tss.EC(), PublicKey.X(), PublicKey.Y())
-	keccakHash.Write(compressedPubKey)
+	keccakHash.Write(IntToByte(Rx))
+	keccakHash.Write(IntToByte(Ry))
+	keccakHash.Write(IntToByte(Px))
+	keccakHash.Write(IntToByte(Py))
 	keccakHash.Write(message[:])
 
 	result := big.NewInt(0).SetBytes(keccakHash.Sum(nil))
-	return result
+	return new(big.Int).Mod(
+		result,
+		tss.EC().Params().N,
+	)
 }
