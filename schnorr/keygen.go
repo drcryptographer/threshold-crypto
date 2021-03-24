@@ -65,7 +65,7 @@ func (cs *CloverSchnorrShare) Id() int32 {
 	return int32(cs.ID.Int64())
 }
 
-func (cs *CloverSchnorrShare) GetPublicKey() *ecdsa.PublicKey {
+func (cs *CloverSchnorrShare) PublicKey() *ecdsa.PublicKey {
 	var key = &ecdsa.PublicKey{
 		Curve: tss.EC(),
 		X:     cs.Vs[0].X(),
@@ -74,8 +74,12 @@ func (cs *CloverSchnorrShare) GetPublicKey() *ecdsa.PublicKey {
 	return key
 }
 
-func (cs *CloverSchnorrShare) GetCompressedPublicKey() []byte {
+func (cs *CloverSchnorrShare) CompressedPublicKey() []byte {
 	return elliptic.MarshalCompressed(tss.EC(), cs.Vs[0].X(), cs.Vs[0].Y())
+}
+
+func (cs *CloverSchnorrShare) Bip340PublicKey() []byte {
+	return utils.IntToByte(cs.Vs[0].X())
 }
 
 type SchnorrKeyGen struct {

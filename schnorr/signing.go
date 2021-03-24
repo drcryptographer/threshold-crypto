@@ -53,10 +53,22 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 	r_i := sc.Dkg.Share.Share
 	var msg [32]byte
 	copy(msg[:], sc.Round0.GetSigning().GetMessage())
-	k := thresholdagent.GetScalar(sc.Round0.SType, msg, utils.IntToByte(sc.R().X()), sc.PublicKey())
 
-	sigma_i := new(big.Int).Mul(k, sc.Share.Share)
-	sigma_i = new(big.Int).Add(sigma_i, r_i)
+	e := thresholdagent.GetScalar(sc.Round0.SType, msg, utils.IntToByte(sc.R().X()), sc.PublicKey())
+
+	if !utils.IsEven(sc.PublicKey().Y()) {
+		e = new(big.Int).Sub(tss.EC().Params().N, e)
+	}
+	fmt.Printf("--------------------------------%t\n", utils.IsEven(sc.R().Y()))
+	fmt.Printf("--------------------------------%t\n", utils.IsEven(sc.PublicKey().Y()))
+
+	sigma_i := new(big.Int).Mul(e, sc.Share.Share)
+
+	if utils.IsEven(sc.R().Y()) {
+		sigma_i = new(big.Int).Add(sigma_i, r_i)
+	} else {
+		sigma_i = new(big.Int).Sub(sigma_i, r_i)
+	}
 	sigma_i = new(big.Int).Mod(sigma_i, tss.EC().Params().N)
 
 	sc.sigma_i = sigma_i
@@ -92,10 +104,9 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 	}
 	R := sc.Dkg.GetPublicKey()
 
-	fmt.Printf("--------------------------------%t\n", IsEven(R.Y()))
 	sgn := &thresholdagent.SchnorrSignature{
 		SType:       sc.Round0.SType,
-		PublicKey:   sc.GetCompressedPublicKey(),
+		PublicKey:   sc.CompressedPublicKey(),
 		SigningData: sc.Round0.GetSigning().GetMessage(),
 		R:           R.X().Bytes(),
 		S:           s.Bytes(),
@@ -105,10 +116,6 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 	}
 	//verify signature
 	return sgn, nil
-}
-
-func IsEven(b *big.Int) bool {
-	return b.Bit(0) == 0
 }
 
 func FilterRound3(id int32, roundx []*thresholdagent.SchnorrRound3Msg) []*thresholdagent.SchnorrRound3Msg {

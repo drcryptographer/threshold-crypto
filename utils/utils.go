@@ -1,61 +1,18 @@
 package utils
 
 import (
-	"bytes"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/crypto/vss"
-	"github.com/binance-chain/tss-lib/tss"
-	"github.com/ebfe/keccak"
 	"io"
 	"math/big"
 	"strconv"
 	"strings"
 )
-
-func IntToByte(i *big.Int) []byte {
-	b1, b2 := [32]byte{}, i.Bytes()
-	copy(b1[32-len(b2):], b2)
-	return b1[:]
-}
-
-//bitcoin schnorr
-func GetBip340E(Px, Py *big.Int, rX []byte, m [32]byte) *big.Int {
-	bundle := bytes.Buffer{}
-	bundle.Write(rX)
-	bundle.Write(IntToByte(Px))
-	bundle.Write(m[:])
-	return new(big.Int).Mod(
-		new(big.Int).SetBytes(HashWithTag("BIP0340/challenge", bundle.Bytes())),
-		tss.EC().Params().N,
-	)
-}
-func HashWithTag(tag string, msg []byte) []byte {
-	tagHash := sha256.Sum256([]byte(tag))
-	h := sha256.New()
-	h.Write(tagHash[:])
-	h.Write(tagHash[:])
-	h.Write(msg)
-	return h.Sum(nil)
-}
-
-//ethereum schnorr
-func GetScalar2(message [32]byte, r []byte, PublicKey *crypto.ECPoint) *big.Int {
-	keccakHash := keccak.New256()
-
-	keccakHash.Write(r)
-	compressedPubKey := elliptic.MarshalCompressed(tss.EC(), PublicKey.X(), PublicKey.Y())
-	keccakHash.Write(compressedPubKey)
-	keccakHash.Write(message[:])
-
-	result := big.NewInt(0).SetBytes(keccakHash.Sum(nil))
-	return result
-}
 
 func ScalarECCBaseMult(curve elliptic.Curve, k *big.Int) *Point {
 	x, y := curve.ScalarBaseMult(k.Bytes())

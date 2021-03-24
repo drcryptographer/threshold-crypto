@@ -25,7 +25,9 @@ func (sgn *SchnorrSignature) Verify() bool {
 	sigma := new(big.Int).SetBytes(sgn.S)
 
 	dec, _ := eth.DecompressPubkey(sgn.PublicKey)
-	pubKey, _ := crypto.NewECPoint(tss.EC(), dec.X, dec.Y)
+	x, y, _ := utils.LiftX(tss.EC(), dec.X)
+
+	pubKey, _ := crypto.NewECPoint(tss.EC(), x, y)
 
 	var msg [32]byte
 	copy(msg[:], sgn.SigningData)
@@ -38,6 +40,11 @@ func (sgn *SchnorrSignature) Verify() bool {
 	kP := pubKey.ScalarMult(negK)
 	RPrime, _ := sG.Add(kP)
 
-	return bytes.Compare(sgn.R, RPrime.X().Bytes()) == 0
-	return true
+	if !utils.IsEven(RPrime.Y()) {
+		return false
+	}
+	if !RPrime.IsOnCurve() {
+		return false
+	}
+	return bytes.Equal(sgn.R, utils.IntToByte(RPrime.X()))
 }
