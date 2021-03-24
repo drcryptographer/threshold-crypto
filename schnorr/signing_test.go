@@ -2,15 +2,31 @@ package schnorr
 
 import (
 	"crypto/ecdsa"
+	"crypto/sha256"
 	"crypto/x509"
+	"fmt"
 	"github.com/clover-network/threshold-crypto/thresholdagent"
 	"github.com/clover-network/threshold-crypto/utils"
+	"github.com/fiatjaf/bip340"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"testing"
 )
 
-func TestSigning(t *testing.T) {
+func TestMulSigningOfSignatureType_SCHNORRv2(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		fmt.Printf("Test %d\n", i+1)
+		RunTestSigning(t, thresholdagent.SignatureType_SCHNORRv2)
+	}
+}
+
+func TestMulSigningOfSignatureType_SCHNORRv1(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		fmt.Printf("Test %d\n", i+1)
+		RunTestSigning(t, thresholdagent.SignatureType_SCHNORRv1)
+	}
+}
+func RunTestSigning(t *testing.T, sType thresholdagent.SignatureType) {
 	var agentKeys = make(map[int32]*ecdsa.PrivateKey)
 	var agentCerts = make(map[int32]*x509.Certificate)
 
@@ -37,7 +53,10 @@ func TestSigning(t *testing.T) {
 	var caCert, _ = utils.LoadCertificateFromFilePath("../shares/ca.cert")
 
 	ids := []int32{1, 2, 3, 4} //16
-	message := []byte{5, 4, 7, 6}
+
+	hash := sha256.New()
+	hash.Write([]byte{5, 4, 7, 6})
+	message := hash.Sum(nil)
 
 	signers := make([]*SchnorrSigningCeremony, len(ids))
 	for i := 0; i < len(ids); i++ {
@@ -51,7 +70,7 @@ func TestSigning(t *testing.T) {
 	for i := 0; i < len(signers); i++ {
 		roun1x[i], err = signers[i].Round1(&thresholdagent.SchnorrRound0Msg{
 			SessionId:   "session 1",
-			SType:       thresholdagent.SignatureType_SCHNORRv1,
+			SType:       sType,
 			SignerCerts: signerCerts,
 			Request: &thresholdagent.SchnorrRound0Msg_Signing{
 				Signing: &thresholdagent.SignRequest{
@@ -79,5 +98,21 @@ func TestSigning(t *testing.T) {
 		roun4x[i], err = signers[i].Round4(FilterRound3(int32(signers[i].ID.Int64()), roun3x)...)
 		assert.Nil(t, err)
 		assert.True(t, roun4x[i].Verify())
+
+		if roun4x[0].SType == thresholdagent.SignatureType_SCHNORRv1 {
+			var (
+				publicKey [32]byte
+				message   [32]byte
+				signature [64]byte
+			)
+			copy(publicKey[:], roun4x[0].PublicKey[1:])
+			copy(message[:], roun4x[0].SigningData)
+			copy(signature[:32], roun4x[0].R)
+			copy(signature[32:], roun4x[0].S)
+
+			result, _ := bip340.Verify(publicKey, message, signature)
+			assert.True(t, result)
+		}
+		//
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/binance-chain/tss-lib/crypto/vss"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/clover-network/threshold-crypto/thresholdagent"
+	"github.com/clover-network/threshold-crypto/utils"
 	"math/big"
 )
 
@@ -16,6 +17,7 @@ type SchnorrSigningCeremony struct {
 	Dkg     *SchnorrKeyGen
 	sigma_i *big.Int
 	Round0  *thresholdagent.SchnorrRound0Msg
+	e       *big.Int //for eth
 }
 
 func NewSchnorrSigningCeremony(sessionId string, caCert *x509.Certificate, agentKey *ecdsa.PrivateKey, agentCerts map[int32]*x509.Certificate, share *CloverSchnorrShare) *SchnorrSigningCeremony {
@@ -50,13 +52,31 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 		return nil, err
 	}
 	r_i := sc.Dkg.Share.Share
-	k := thresholdagent.GetScalar(sc.Round0.SType, sc.Round0.GetSigning().GetMessage(), sc.R().X().Bytes(), sc.PublicKey())
+	var msg [32]byte
+	copy(msg[:], sc.Round0.GetSigning().GetMessage())
 
-	sigma_i := new(big.Int).Mul(k, sc.Share.Share)
-	sigma_i = new(big.Int).Add(sigma_i, r_i)
+	var sigma_i *big.Int
+	if sc.Round0.SType == thresholdagent.SignatureType_SCHNORRv1 {
+		e := utils.GetBip340E(sc.PublicKey().X(), sc.PublicKey().Y(), utils.IntToBytes(sc.R().X()), msg)
+		if !utils.IsEven(sc.PublicKey().Y()) {
+			e = new(big.Int).Sub(tss.EC().Params().N, e)
+		}
+		sigma_i = new(big.Int).Mul(e, sc.Share.Share)
+		if utils.IsEven(sc.R().Y()) {
+			sigma_i = new(big.Int).Add(sigma_i, r_i)
+		} else {
+			sigma_i = new(big.Int).Sub(sigma_i, r_i)
+		}
+	} else {
+		e := utils.GetScalarETH(msg[:], sc.R().X(), sc.R().Y(), sc.PublicKey().X(), sc.PublicKey().Y())
+		sigma_i = new(big.Int).Mul(e, sc.Share.Share)
+		sigma_i = new(big.Int).Sub(r_i, sigma_i)
+		sc.e = e
+
+	}
 	sigma_i = new(big.Int).Mod(sigma_i, tss.EC().Params().N)
-
 	sc.sigma_i = sigma_i
+
 	return &thresholdagent.SchnorrRound3Msg{
 		SessionId: sc.Dkg.SessionId,
 		SenderId:  sc.Dkg.Id(),
@@ -87,20 +107,27 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 	if err != nil {
 		return nil, err
 	}
-	R := sc.Dkg.GetPublicKey()
+
+	R := utils.IntToBytes(sc.Dkg.GetPublicKey().X())
+	if sc.Round0.SType == thresholdagent.SignatureType_SCHNORRv2 {
+		R = utils.IntToBytes(sc.e)
+	}
+
 	sgn := &thresholdagent.SchnorrSignature{
 		SType:       sc.Round0.SType,
-		PublicKey:   sc.GetCompressedPublicKey(),
+		PublicKey:   sc.CompressedPublicKey(),
 		SigningData: sc.Round0.GetSigning().GetMessage(),
-		R:           R.X().Bytes(),
-		S:           s.Bytes(),
+		R:           R,
+		S:           utils.IntToBytes(s),
 	}
 	if !sgn.Verify() {
 		return nil, fmt.Errorf("the computed signature is not valid")
 	}
 	//verify signature
+
 	return sgn, nil
 }
+
 func FilterRound3(id int32, roundx []*thresholdagent.SchnorrRound3Msg) []*thresholdagent.SchnorrRound3Msg {
 	var result []*thresholdagent.SchnorrRound3Msg
 	for _, next := range roundx {
