@@ -114,11 +114,11 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 	}
 
 	sgn := &thresholdagent.SchnorrSignature{
-		SType:       sc.Round0.SType,
-		PublicKey:   sc.CompressedPublicKey(),
-		SigningData: sc.Round0.GetSigning().GetMessage(),
-		R:           R,
-		S:           utils.IntToBytes(s),
+		SType:               sc.Round0.SType,
+		CompressedPublicKey: sc.CompressedPublicKey(),
+		SigningData:         sc.Round0.GetSigning().GetMessage(),
+		R:                   R,
+		S:                   utils.IntToBytes(s),
 	}
 	if !sgn.Verify() {
 		return nil, fmt.Errorf("the computed signature is not valid")

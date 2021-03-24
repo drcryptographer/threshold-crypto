@@ -105,7 +105,7 @@ func RunTestSigning(t *testing.T, sType thresholdagent.SignatureType) {
 				message   [32]byte
 				signature [64]byte
 			)
-			copy(publicKey[:], roun4x[0].PublicKey[1:])
+			copy(publicKey[:], roun4x[0].CompressedPublicKey[1:])
 			copy(message[:], roun4x[0].SigningData)
 			copy(signature[:32], roun4x[0].R)
 			copy(signature[32:], roun4x[0].S)

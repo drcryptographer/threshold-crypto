@@ -23,7 +23,7 @@ func (sgn *SchnorrSignature) FromBip340Signature(publicKey [33]byte, message [32
 	sgn.R = signature[:32]
 	sgn.S = signature[32:]
 	sgn.SigningData = message[:]
-	sgn.PublicKey = publicKey[:]
+	sgn.CompressedPublicKey = publicKey[:]
 }
 
 //publicKey is compressed
@@ -32,7 +32,7 @@ func (sgn *SchnorrSignature) FromEthSignature(publicKey [33]byte, message, R, S 
 	sgn.R = R[:]
 	sgn.S = S[:]
 	sgn.SigningData = message[:]
-	sgn.PublicKey = publicKey[:]
+	sgn.CompressedPublicKey = publicKey[:]
 }
 
 func (sgn *SchnorrSignature) Verify() bool {
@@ -51,7 +51,7 @@ func (sgn *SchnorrSignature) VerifyEth() bool {
 	curve := tss.EC()
 	// s = k - xe mod N where Rx, Ry = eG
 	sigma := new(big.Int).SetBytes(sgn.S)
-	dec, _ := eth.DecompressPubkey(sgn.PublicKey)
+	dec, _ := eth.DecompressPubkey(sgn.CompressedPublicKey)
 	P, _ := crypto.NewECPoint(curve, dec.X, dec.Y)
 	e := new(big.Int).SetBytes(sgn.R)
 
@@ -72,7 +72,7 @@ func (sgn *SchnorrSignature) VerifyBip340() bool {
 	curve := tss.EC()
 	// s = r + k * x
 	sigma := new(big.Int).SetBytes(sgn.S)
-	x, y, _ := utils.LiftX(curve, new(big.Int).SetBytes(sgn.PublicKey[1:]))
+	x, y, _ := utils.LiftX(curve, new(big.Int).SetBytes(sgn.CompressedPublicKey[1:]))
 
 	var msg [32]byte
 	copy(msg[:], sgn.SigningData)
