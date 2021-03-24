@@ -57,7 +57,7 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 
 	var sigma_i *big.Int
 	if sc.Round0.SType == thresholdagent.SignatureType_SCHNORRv1 {
-		e := utils.GetBip340E(sc.PublicKey().X(), sc.PublicKey().Y(), utils.IntToByte(sc.R().X()), msg)
+		e := utils.GetBip340E(sc.PublicKey().X(), sc.PublicKey().Y(), utils.IntToBytes(sc.R().X()), msg)
 		if !utils.IsEven(sc.PublicKey().Y()) {
 			e = new(big.Int).Sub(tss.EC().Params().N, e)
 		}
@@ -108,9 +108,9 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 		return nil, err
 	}
 
-	R := utils.IntToByte(sc.Dkg.GetPublicKey().X())
+	R := utils.IntToBytes(sc.Dkg.GetPublicKey().X())
 	if sc.Round0.SType == thresholdagent.SignatureType_SCHNORRv2 {
-		R = utils.IntToByte(sc.e)
+		R = utils.IntToBytes(sc.e)
 	}
 
 	sgn := &thresholdagent.SchnorrSignature{
@@ -118,7 +118,7 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 		PublicKey:   sc.CompressedPublicKey(),
 		SigningData: sc.Round0.GetSigning().GetMessage(),
 		R:           R,
-		S:           utils.IntToByte(s),
+		S:           utils.IntToBytes(s),
 	}
 	if !sgn.Verify() {
 		return nil, fmt.Errorf("the computed signature is not valid")

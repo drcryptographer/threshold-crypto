@@ -10,6 +10,31 @@ import (
 	"math/big"
 )
 
+func (sgn *SchnorrSignature) Bip340Signature() [64]byte {
+	var result [64]byte
+	copy(result[:32], sgn.R)
+	copy(result[32:], sgn.S)
+	return result
+}
+
+//publicKey is compressed
+func (sgn *SchnorrSignature) FromBip340Signature(publicKey [33]byte, message [32]byte, signature [64]byte) {
+	sgn.SType = SignatureType_SCHNORRv1
+	sgn.R = signature[:32]
+	sgn.S = signature[32:]
+	sgn.SigningData = message[:]
+	sgn.PublicKey = publicKey[:]
+}
+
+//publicKey is compressed
+func (sgn *SchnorrSignature) FromEthSignature(publicKey [33]byte, message, R, S [32]byte) {
+	sgn.SType = SignatureType_SCHNORRv2
+	sgn.R = R[:]
+	sgn.S = S[:]
+	sgn.SigningData = message[:]
+	sgn.PublicKey = publicKey[:]
+}
+
 func (sgn *SchnorrSignature) Verify() bool {
 	switch sgn.SType {
 	case SignatureType_SCHNORRv1:
@@ -67,5 +92,5 @@ func (sgn *SchnorrSignature) VerifyBip340() bool {
 	if !RPrime.IsOnCurve() {
 		return false
 	}
-	return bytes.Equal(sgn.R, utils.IntToByte(RPrime.X()))
+	return bytes.Equal(sgn.R, utils.IntToBytes(RPrime.X()))
 }

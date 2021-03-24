@@ -14,14 +14,14 @@ import (
 )
 
 func TestMulSigningOfSignatureType_SCHNORRv2(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		fmt.Printf("Test %d\n", i+1)
 		RunTestSigning(t, thresholdagent.SignatureType_SCHNORRv2)
 	}
 }
 
 func TestMulSigningOfSignatureType_SCHNORRv1(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		fmt.Printf("Test %d\n", i+1)
 		RunTestSigning(t, thresholdagent.SignatureType_SCHNORRv1)
 	}

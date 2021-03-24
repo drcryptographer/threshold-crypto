@@ -10,7 +10,7 @@ import (
 	"math/big"
 )
 
-func IntToByte(i *big.Int) []byte {
+func IntToBytes(i *big.Int) []byte {
 	b1, b2 := [32]byte{}, i.Bytes()
 	copy(b1[32-len(b2):], b2)
 	return b1[:]
@@ -53,7 +53,7 @@ func IsEven(b *big.Int) bool {
 func GetBip340E(Px, Py *big.Int, rX []byte, m [32]byte) *big.Int {
 	bundle := bytes.Buffer{}
 	bundle.Write(rX)
-	bundle.Write(IntToByte(Px))
+	bundle.Write(IntToBytes(Px))
 	bundle.Write(m[:])
 	return new(big.Int).Mod(
 		new(big.Int).SetBytes(HashWithTag("BIP0340/challenge", bundle.Bytes())),
@@ -71,10 +71,10 @@ func HashWithTag(tag string, msg []byte) []byte {
 
 func GetScalarETH(message []byte, Rx, Ry, Px, Py *big.Int) *big.Int {
 	keccakHash := keccak.New256()
-	keccakHash.Write(IntToByte(Rx))
-	keccakHash.Write(IntToByte(Ry))
-	keccakHash.Write(IntToByte(Px))
-	keccakHash.Write(IntToByte(Py))
+	keccakHash.Write(IntToBytes(Rx))
+	keccakHash.Write(IntToBytes(Ry))
+	keccakHash.Write(IntToBytes(Px))
+	keccakHash.Write(IntToBytes(Py))
 	keccakHash.Write(message[:])
 
 	result := big.NewInt(0).SetBytes(keccakHash.Sum(nil))

@@ -79,7 +79,7 @@ func (cs *CloverSchnorrShare) CompressedPublicKey() []byte {
 }
 
 func (cs *CloverSchnorrShare) Bip340PublicKey() []byte {
-	return utils.IntToByte(cs.Vs[0].X())
+	return utils.IntToBytes(cs.Vs[0].X())
 }
 
 type SchnorrKeyGen struct {
