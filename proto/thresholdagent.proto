@@ -74,7 +74,7 @@ message AuthResponse{
 
 message SchnorrSignature {
   SignatureType sType = 1;
-  bytes publicKey = 2;
+  bytes compressedPublicKey = 2;
   bytes signingData = 3;
   bytes R = 4;
   bytes S = 5;
