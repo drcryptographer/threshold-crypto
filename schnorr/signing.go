@@ -59,8 +59,6 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 	if !utils.IsEven(sc.PublicKey().Y()) {
 		e = new(big.Int).Sub(tss.EC().Params().N, e)
 	}
-	fmt.Printf("--------------------------------%t\n", utils.IsEven(sc.R().Y()))
-	fmt.Printf("--------------------------------%t\n", utils.IsEven(sc.PublicKey().Y()))
 
 	sigma_i := new(big.Int).Mul(e, sc.Share.Share)
 
@@ -103,6 +101,9 @@ func (sc *SchnorrSigningCeremony) Round4(round3 ...*thresholdagent.SchnorrRound3
 		return nil, err
 	}
 	R := sc.Dkg.GetPublicKey()
+
+	fmt.Printf("public key is %t\n", utils.IsEven(sc.PublicKey().Y()))
+	fmt.Printf("R key is %t\n", utils.IsEven(R.Y()))
 
 	sgn := &thresholdagent.SchnorrSignature{
 		SType:       sc.Round0.SType,

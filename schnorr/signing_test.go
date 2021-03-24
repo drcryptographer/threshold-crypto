@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"fmt"
 	"github.com/clover-network/threshold-crypto/thresholdagent"
 	"github.com/clover-network/threshold-crypto/utils"
 	"github.com/stretchr/testify/assert"
@@ -11,6 +12,12 @@ import (
 	"testing"
 )
 
+func TestMulSigning(t *testing.T) {
+	for i := 0; i < 10000; i++ {
+		fmt.Printf("Test %d\n", i+1)
+		TestSigning(t)
+	}
+}
 func TestSigning(t *testing.T) {
 	var agentKeys = make(map[int32]*ecdsa.PrivateKey)
 	var agentCerts = make(map[int32]*x509.Certificate)
