@@ -77,14 +77,14 @@ func (sgn *SchnorrSignature) VerifyBip340() bool {
 	var msg [32]byte
 	copy(msg[:], sgn.SigningData)
 
-	k := utils.GetBip340E(x, y, sgn.R, msg)
-	negK := new(big.Int).Sub(curve.Params().N, k)
+	e := utils.GetBip340E(x, y, sgn.R, msg)
+	negE := new(big.Int).Sub(curve.Params().N, e)
 
 	P, _ := crypto.NewECPoint(curve, x, y)
-	//sG - kP ?= R
+	//sG - eP ?= R
 	sG := crypto.ScalarBaseMult(curve, sigma)
-	kP := P.ScalarMult(negK)
-	RPrime, _ := sG.Add(kP)
+	eP := P.ScalarMult(negE)
+	RPrime, _ := sG.Add(eP)
 
 	if !utils.IsEven(RPrime.Y()) {
 		return false

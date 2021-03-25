@@ -44,6 +44,18 @@ func LiftX(curve elliptic.Curve, x *big.Int) (*big.Int, *big.Int, error) {
 	}
 	return x, y, nil
 }
+func LiftXEvenY(curve elliptic.Curve, x *big.Int) (*big.Int, *big.Int, error) {
+	Px, Py, err := LiftX(curve, x)
+	if err != nil {
+		return nil, nil, err
+	}
+	if IsEven(Py) {
+		return Px, Py, nil
+	} else {
+		Py.Sub(curve.Params().P, Py)
+		return Px, Py, nil
+	}
+}
 
 func IsEven(b *big.Int) bool {
 	return b.Bit(0) == 0

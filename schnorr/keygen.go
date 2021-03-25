@@ -272,8 +272,32 @@ func (kg *SchnorrKeyGen) Round3(round2s ...*thresholdagent.SchnorrRound2Msg) (*t
 	if !sumShare.Verify(kg.Threshold, sumCommitment) {
 		return nil, fmt.Errorf("sumshare is not verified")
 	}
+
 	kg.Share = share
 	kg.poly = poly
+	//***************************************making liftx to return always even Y*******************
+	curve := tss.EC()
+	_, Y, _ := utils.LiftX(curve, poly[0].X())
+	if !utils.IsEven(Y) {
+		for i := 1; i < 1000; i++ {
+			secret := big.NewInt(int64(i))
+			iP := crypto.ScalarBaseMult(curve, secret)
+			nextP, _ := iP.Add(poly[0])
+			_, Y, _ = utils.LiftX(curve, nextP.X())
+			if utils.IsEven(Y) {
+				coeffs := sampleDeterministicPolynomial(share.Threshold, secret)
+				adShare := &vss.Share{Threshold: share.Threshold, ID: share.ID, Share: evaluatePolynomial(share.Threshold, coeffs, share.ID)}
+				v := make(vss.Vs, len(poly))
+				for i, ai := range coeffs {
+					v[i] = crypto.ScalarBaseMult(tss.EC(), ai)
+				}
+				kg.Share, _ = feldmanvss.AddShare(kg.Share, adShare)
+				kg.poly, _ = feldmanvss.AddVs(kg.poly, v)
+				break
+			}
+		}
+	}
+	//***************************************making liftx to return always even Y*******************
 
 	return &thresholdagent.SchnorrRound3Msg{
 		SessionId: kg.SessionId,
