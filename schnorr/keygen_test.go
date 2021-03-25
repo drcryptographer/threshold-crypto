@@ -3,12 +3,15 @@ package schnorr
 import (
 	"crypto/ecdsa"
 	"crypto/x509"
+	"fmt"
+	"github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/clover-network/threshold-crypto/thresholdagent"
 	"github.com/clover-network/threshold-crypto/utils"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"math/big"
 	"testing"
 )
 
@@ -75,5 +78,28 @@ func TestKeyGen(t *testing.T) {
 	secret, _ := utils.ReConstructSecret(players[0].Share, players[1].Share, players[2].Share, players[3].Share)
 	computedPubkey := crypto.ScalarBaseMult(tss.EC(), secret)
 	assert.Equal(t, players[0].GetPublicKey(), computedPubkey)
+
+}
+
+func TestLiftX(t *testing.T) {
+	var order = tss.EC().Params().N
+	x := common.GetRandomPositiveInt(order)
+	xG := crypto.ScalarBaseMult(tss.EC(), x)
+
+	_, Y, _ := utils.LiftX(tss.EC(), xG.X())
+
+	xprime := new(big.Int).Sub(order, x)
+	xpG := crypto.ScalarBaseMult(tss.EC(), xprime)
+
+	println(xG.X().Text(10))
+	println(xpG.X().Text(10))
+
+	fmt.Println("-------------------------")
+	println(xG.Y().Text(10))
+	println(xpG.Y().Text(10))
+	println(new(big.Int).Sub(tss.EC().Params().P, xG.Y()).Text(10))
+
+	fmt.Println("-------------------------")
+	println(Y.Text(10))
 
 }

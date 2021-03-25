@@ -58,15 +58,23 @@ func (sc *SchnorrSigningCeremony) Round3(round2 ...*thresholdagent.SchnorrRound2
 	var sigma_i *big.Int
 	if sc.Round0.SType == thresholdagent.SignatureType_SCHNORRv1 {
 		e := utils.GetBip340E(sc.PublicKey().X(), sc.PublicKey().Y(), utils.IntToBytes(sc.R().X()), msg)
-		if !utils.IsEven(sc.PublicKey().Y()) {
-			e = new(big.Int).Sub(tss.EC().Params().N, e)
-		}
 		sigma_i = new(big.Int).Mul(e, sc.Share.Share)
-		if utils.IsEven(sc.R().Y()) {
-			sigma_i = new(big.Int).Add(sigma_i, r_i)
+
+		if !utils.IsEven(sc.PublicKey().Y()) {
+			if utils.IsEven(sc.R().Y()) {
+				sigma_i = new(big.Int).Sub(r_i, sigma_i)
+			} else {
+				sigma_i = new(big.Int).Add(sigma_i, r_i)
+				sigma_i = new(big.Int).Neg(sigma_i)
+			}
 		} else {
-			sigma_i = new(big.Int).Sub(sigma_i, r_i)
+			if utils.IsEven(sc.R().Y()) {
+				sigma_i = new(big.Int).Add(sigma_i, r_i)
+			} else {
+				sigma_i = new(big.Int).Sub(sigma_i, r_i)
+			}
 		}
+
 	} else {
 		e := utils.GetScalarETH(msg[:], sc.R().X(), sc.R().Y(), sc.PublicKey().X(), sc.PublicKey().Y())
 		sigma_i = new(big.Int).Mul(e, sc.Share.Share)
