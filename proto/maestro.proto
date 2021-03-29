@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package maestro;
+
+option go_package = "github.com/clover-network/threshold-crypto/maestro";
+import "google/protobuf/timestamp.proto";
+import "proto/thresholdagent.proto";
+
+
+message Request {
+  string groupId = 1;
+  repeated bytes agentCerts = 2;
+  int32 threshold = 3;
+  thresholdagent.SignatureType sType = 4;
+  google.protobuf.Timestamp timestamp = 5;
+}
+
+message Response  {
+  string groupId = 1;
+  bytes publicKey = 2;
+  thresholdagent.Status status = 3;
+  string description = 4;
+}
+
+message SignRequest {
+  bytes publicKey = 1;
+  thresholdagent.SignatureType sType = 2;
+  bytes signingData = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+// SignResponse returned by a RemoteSigner gRPC service.
+message SignResponse {
+  thresholdagent.SignatureType sType = 1;
+  bytes publicKey = 2;
+  bytes message = 3;
+  bytes signature = 4;
+}
+
+service ThresholdMaestro {
+  rpc DistributedKeyGen(Request) returns (Response) {}
+  rpc Sign(SignRequest) returns (SignResponse) {}
+}
