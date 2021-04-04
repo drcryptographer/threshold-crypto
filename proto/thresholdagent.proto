@@ -96,6 +96,14 @@ message ResultMsg {
 }
 
 
+message EcdsaRoundMessage {
+  string SessionId = 1;
+  int32  SenderId = 2;
+  int32  ReceiverId = 3;
+  int32 Round = 4;
+  bytes Data = 5;
+}
+
 service ThresholdAgent {
   rpc Authenticate(AuthRequest) returns (AuthResponse) {}
 
@@ -108,5 +116,8 @@ service ThresholdAgent {
   rpc SchnorrSignRound2(SchnorrRound1MsgList) returns (SchnorrRound2MsgList) {}
   rpc SchnorrSignRound3(SchnorrRound2MsgList) returns (SchnorrRound3Msg) {}
   rpc SchnorrSignRound4(SchnorrRound3MsgList) returns (SchnorrSignature) {}
+
+  rpc EcdsaDkgRoundX(EcdsaRoundMessage) returns (EcdsaRoundMessage) {}
+  rpc EcdsaSignRoundX(EcdsaRoundMessage) returns (EcdsaRoundMessage) {}
 
 }
