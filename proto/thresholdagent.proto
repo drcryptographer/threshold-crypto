@@ -4,6 +4,7 @@ package thresholdagent;
 
 option go_package = "github.com/clover-network/threshold-crypto/thresholdagent";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
 
 
 enum Status {
@@ -99,9 +100,8 @@ message ResultMsg {
 message EcdsaRoundMessage {
   string SessionId = 1;
   int32  SenderId = 2;
-  int32  ReceiverId = 3;
-  int32 Round = 4;
-  bytes Data = 5;
+  int32 Round = 3;
+  repeated google.protobuf.Any messages = 4;
 }
 
 service ThresholdAgent {
