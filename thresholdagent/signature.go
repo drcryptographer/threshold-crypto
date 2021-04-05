@@ -3,12 +3,22 @@ package thresholdagent
 import (
 	"bytes"
 	_ "crypto/elliptic"
+	"encoding/json"
 	"github.com/binance-chain/tss-lib/crypto"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/clover-network/threshold-crypto/utils"
 	eth "github.com/ethereum/go-ethereum/crypto"
 	"math/big"
 )
+
+func (x *EcdsaRoundMessage) GetParsedMessages() []tss.Message {
+	messages, _ := UnMarshalMessageArray(x.Messages)
+	return messages
+}
+
+func (x *EcdsaRoundMessage) SetMessages(msgs []tss.Message) {
+	x.Messages, _ = MarshalMessageArray(msgs)
+}
 
 func (sgn *SchnorrSignature) Bip340Signature() [64]byte {
 	var result [64]byte
@@ -93,4 +103,59 @@ func (sgn *SchnorrSignature) VerifyBip340() bool {
 		return false
 	}
 	return bytes.Equal(sgn.R, utils.IntToBytes(RPrime.X()))
+}
+
+func MarshalMessage(msg tss.Message) ([]byte, error) {
+	buffer, _, _ := msg.WireBytes()
+	message := struct {
+		Index       int
+		IsBroadcast bool
+
+		Id      string
+		Moniker string
+		Wire    []byte
+		Key     []byte
+	}{
+		Index:       msg.GetFrom().Index,
+		Id:          msg.GetFrom().Id,
+		Moniker:     msg.GetFrom().Moniker,
+		IsBroadcast: msg.IsBroadcast(),
+		Wire:        buffer,
+		Key:         msg.GetFrom().Key,
+	}
+	return json.Marshal(&message)
+}
+func UnMarshalMessage(msg []byte) (tss.Message, error) {
+	message := struct {
+		Index       int
+		IsBroadcast bool
+		Wire        []byte
+		Id          string
+		Moniker     string
+		Key         []byte
+	}{}
+	json.Unmarshal(msg, &message)
+	from := tss.NewPartyID(message.Id, message.Moniker, new(big.Int).SetBytes(message.Key))
+	from.Index = message.Index
+	return tss.ParseWireMessage(message.Wire, from, message.IsBroadcast)
+}
+func UnMarshalMessageArray(msg [][]byte) ([]tss.Message, error) {
+	var result = make([]tss.Message, len(msg))
+	var err error
+	for i := 0; i < len(result); i++ {
+		if result[i], err = UnMarshalMessage(msg[i]); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+func MarshalMessageArray(msg []tss.Message) ([][]byte, error) {
+	var result = make([][]byte, len(msg))
+	var err error
+	for i := 0; i < len(result); i++ {
+		if result[i], err = MarshalMessage(msg[i]); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
