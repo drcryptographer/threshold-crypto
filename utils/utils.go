@@ -132,36 +132,47 @@ func MarshalMessage(msg tss.Message) ([]byte, error) {
 	buffer, _, _ := msg.WireBytes()
 	message := struct {
 		Index       int
+		Id          string
+		ToIndex     int
+		ToId        string
 		IsBroadcast bool
-
-		Id      string
-		Moniker string
-		Wire    []byte
-		Key     []byte
+		Wire        []byte
 	}{
 		Index:       msg.GetFrom().Index,
 		Id:          msg.GetFrom().Id,
-		Moniker:     msg.GetFrom().Moniker,
 		IsBroadcast: msg.IsBroadcast(),
 		Wire:        buffer,
-		Key:         msg.GetFrom().Key,
+	}
+	if msg.GetTo() != nil {
+		message.ToId = msg.GetTo()[0].Id
+		message.ToIndex = msg.GetTo()[0].Index
 	}
 	return json.Marshal(&message)
 }
 func UnMarshalMessage(msg []byte) (tss.Message, error) {
 	message := struct {
 		Index       int
+		Id          string
+		ToIndex     int
+		ToId        string
 		IsBroadcast bool
 		Wire        []byte
-		Id          string
-		Moniker     string
-		Key         []byte
 	}{}
 	json.Unmarshal(msg, &message)
-	from := tss.NewPartyID(message.Id, message.Moniker, new(big.Int).SetBytes(message.Key))
+	from := tss.NewPartyID(message.Id, message.Id, new(big.Int).SetBytes([]byte(message.Id)))
 	from.Index = message.Index
-	return tss.ParseWireMessage(message.Wire, from, message.IsBroadcast)
+	result, err := tss.ParseWireMessage(message.Wire, from, message.IsBroadcast)
+
+	if !message.IsBroadcast {
+		to := tss.NewPartyID(message.ToId, message.ToId, new(big.Int).SetBytes([]byte(message.ToId)))
+		to.Index = message.ToIndex
+
+		rout := result.(*tss.MessageImpl)
+		rout.To = []*tss.PartyID{to}
+	}
+	return result, err
 }
+
 func UnMarshalMessageArray(msg [][]byte) ([]tss.Message, error) {
 	var result = make([]tss.Message, len(msg))
 	var err error
