@@ -10,6 +10,15 @@ import (
 	"math/big"
 )
 
+func (x *EcdsaRoundMessage) GetParsedMessages() []tss.Message {
+	messages, _ := utils.UnMarshalMessageArray(x.Messages)
+	return messages
+}
+
+func (x *EcdsaRoundMessage) SetMessages(msgs []tss.Message) {
+	x.Messages, _ = utils.MarshalMessageArray(msgs)
+}
+
 func (sgn *SchnorrSignature) Bip340Signature() [64]byte {
 	var result [64]byte
 	copy(result[:32], sgn.R)
