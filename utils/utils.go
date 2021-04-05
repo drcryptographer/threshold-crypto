@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"github.com/binance-chain/tss-lib/crypto/vss"
 	"github.com/binance-chain/tss-lib/tss"
 	"io"
@@ -180,4 +181,12 @@ func MarshalMessageArray(msg []tss.Message) ([][]byte, error) {
 		}
 	}
 	return result, nil
+}
+
+func GetSortedPartyID(ids []int) tss.SortedPartyIDs {
+	unsorted := make(tss.UnSortedPartyIDs, len(ids))
+	for i := 0; i < len(ids); i++ {
+		unsorted[i] = tss.NewPartyID(fmt.Sprintf("%d", ids[i]), fmt.Sprintf("P[%d]", ids[i]), big.NewInt(int64(ids[i])))
+	}
+	return tss.SortPartyIDs(unsorted)
 }
