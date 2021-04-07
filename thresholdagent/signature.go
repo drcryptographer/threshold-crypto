@@ -11,6 +11,11 @@ import (
 	"math/big"
 )
 
+func (x *EcdsaRoundMessage) GetParsedMessages() []tss.Message {
+	messages, _ := utils.UnMarshalMessageArray(x.Messages)
+	return messages
+}
+
 func (x *EcdsaRoundMessage) GetCLMessage() []utils.CLMessage {
 	var result = make([]utils.CLMessage, len(x.Messages))
 	for i := 0; i < len(result); i++ {
@@ -18,6 +23,10 @@ func (x *EcdsaRoundMessage) GetCLMessage() []utils.CLMessage {
 		_ = json.Unmarshal(x.Messages[i], &result[i])
 	}
 	return result
+}
+
+func (x *EcdsaRoundMessage) SetMessages(msgs []tss.Message) {
+	x.Messages, _ = utils.MarshalMessageArray(msgs)
 }
 
 func (sgn *SchnorrSignature) Bip340Signature() [64]byte {
