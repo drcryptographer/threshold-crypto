@@ -128,16 +128,18 @@ func ReConstructSecret(shares ...*vss.Share) (*big.Int, error) {
 	return sharesFinal.ReConstruct()
 }
 
+type CLMessage struct {
+	Index       int
+	Id          string
+	ToIndex     int
+	ToId        string
+	IsBroadcast bool
+	Wire        []byte
+}
+
 func MarshalMessage(msg tss.Message) ([]byte, error) {
 	buffer, _, _ := msg.WireBytes()
-	message := struct {
-		Index       int
-		Id          string
-		ToIndex     int
-		ToId        string
-		IsBroadcast bool
-		Wire        []byte
-	}{
+	message := CLMessage{
 		Index:       msg.GetFrom().Index,
 		Id:          msg.GetFrom().Id,
 		IsBroadcast: msg.IsBroadcast(),
@@ -150,14 +152,7 @@ func MarshalMessage(msg tss.Message) ([]byte, error) {
 	return json.Marshal(&message)
 }
 func UnMarshalMessage(msg []byte) (tss.Message, error) {
-	message := struct {
-		Index       int
-		Id          string
-		ToIndex     int
-		ToId        string
-		IsBroadcast bool
-		Wire        []byte
-	}{}
+	message := CLMessage{}
 	json.Unmarshal(msg, &message)
 	from := tss.NewPartyID(message.Id, message.Id, new(big.Int).SetBytes([]byte(message.Id)))
 	from.Index = message.Index
