@@ -3,7 +3,7 @@ module github.com/clover-network/threshold-crypto
 go 1.15
 
 require (
-	github.com/binance-chain/tss-lib v1.3.2
+	github.com/binance-chain/tss-lib v0.0.0-00010101000000-000000000000
 	github.com/btcsuite/btcd v0.21.0-beta // indirect
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/ebfe/keccak v0.0.0-20150115210727-5cc570678d1b
@@ -17,3 +17,5 @@ require (
 	google.golang.org/grpc v1.36.0
 	google.golang.org/protobuf v1.25.0
 )
+
+replace github.com/binance-chain/tss-lib => github.com/clover-network/tss-lib v1.3.3-0.20210412152007-6f47151a1d8a
