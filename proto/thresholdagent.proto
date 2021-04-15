@@ -100,6 +100,19 @@ message EcdsaRoundMessage {
   int32  SenderId = 2;
   int32 Round = 3;
   repeated bytes messages = 4;
+  MessageBody message_body = 5;
+}
+
+message MessageBody {
+  oneof body {
+    BlockchainRoot root = 5;
+  }
+}
+
+message BlockchainRoot {
+  string blockchain = 1;
+  uint64 block = 2;
+  bytes root = 3;
 }
 
 service ThresholdAgent {
